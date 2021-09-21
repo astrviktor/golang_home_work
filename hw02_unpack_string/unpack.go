@@ -35,7 +35,11 @@ func Unpack(str string) (string, error) {
 		if idx < len(runes)-1 {
 			// если руна и число - строим строку
 			if !unicode.IsDigit(runes[idx]) && unicode.IsDigit(runes[idx+1]) {
-				i, _ := strconv.Atoi(string(runes[idx+1]))
+				// вообще тут должна пройти конвертация без ошибки (проверка IsDigit), но вдруг...
+				i, err := strconv.Atoi(string(runes[idx+1]))
+				if err != nil {
+					return "", err
+				}
 				builder.WriteString(strings.Repeat(string(runes[idx]), i))
 				idx += 2
 				continue
