@@ -32,7 +32,7 @@ func Top10(text string) []string {
 	}
 
 	// чтобы отсортировать, надо переложить в slice структур
-	wordsFrequency := make([]wordFrequency, 0)
+	wordsFrequency := make([]wordFrequency, 0, len(words))
 	for word, frequency := range words {
 		wordsFrequency = append(wordsFrequency, wordFrequency{word, frequency})
 	}
@@ -52,7 +52,7 @@ func Top10(text string) []string {
 	}
 
 	// формируем результат
-	result := make([]string, 0)
+	result := make([]string, 0, maxLen)
 	for idx := 0; idx < maxLen; idx++ {
 		result = append(result, wordsFrequency[idx].word)
 	}
