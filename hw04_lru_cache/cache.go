@@ -50,7 +50,7 @@ func (lc *lruCache) Set(key Key, value interface{}) bool {
 func (lc *lruCache) Get(key Key) (interface{}, bool) {
 	// если элемент присутствует в словаре, то переместить элемент в начало очереди и вернуть его значение и true
 	if item, ok := lc.items[key]; ok {
-		lc.queue.PushFront(item)
+		lc.queue.MoveToFront(item)
 		return item.Value, true
 	}
 
