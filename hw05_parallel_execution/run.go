@@ -3,7 +3,6 @@ package hw05parallelexecution
 import (
 	"errors"
 	"sync"
-	"sync/atomic"
 )
 
 var ErrErrorsLimitExceeded = errors.New("errors limit exceeded")
@@ -14,10 +13,15 @@ type Task func() error
 func Run(tasks []Task, n, m int) error {
 	workers := make(chan int, n)
 	var wg sync.WaitGroup
-	var errorTasksCount int32
+	var mu sync.Mutex
+	var errorTasksCount int
 
 	for i, t := range tasks {
-		if int(errorTasksCount) >= m && m > 0 {
+		mu.Lock()
+		errorTasksCountCheck := errorTasksCount
+		mu.Unlock()
+
+		if errorTasksCountCheck >= m && m > 0 {
 			close(workers)
 			wg.Wait()
 			return ErrErrorsLimitExceeded
@@ -31,7 +35,9 @@ func Run(tasks []Task, n, m int) error {
 			defer wg.Done()
 			err := t()
 			if err != nil {
-				atomic.AddInt32(&errorTasksCount, 1)
+				mu.Lock()
+				errorTasksCount++
+				mu.Unlock()
 			}
 			// fmt.Println("worker free: ", <-workers)
 			<-workers
