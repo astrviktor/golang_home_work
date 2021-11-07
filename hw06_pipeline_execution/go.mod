@@ -1,4 +1,4 @@
-module github.comastrviktor/golang_home_work/hw06_pipeline_execution
+module github.com/astrviktor/golang_home_work/hw06_pipeline_execution
 
 go 1.16
 
