@@ -1,0 +1,16 @@
+goos: linux
+goarch: amd64
+pkg: github.com/astrviktor/golang_home_work/hw10_program_optimization
+cpu: Intel(R) Core(TM) i7-3820 CPU @ 3.60GHz
+BenchmarkGetDomainStat-4   	 9562287	      2300 ns/op	    4258 B/op	       3 allocs/op
+BenchmarkGetDomainStat-4   	 9984273	      2332 ns/op	    4258 B/op	       3 allocs/op
+BenchmarkGetDomainStat-4   	 9751126	      2330 ns/op	    4258 B/op	       3 allocs/op
+BenchmarkGetDomainStat-4   	10061827	      2497 ns/op	    4258 B/op	       3 allocs/op
+BenchmarkGetDomainStat-4   	 9003931	      2357 ns/op	    4258 B/op	       3 allocs/op
+BenchmarkGetDomainStat-4   	 9291703	      2290 ns/op	    4258 B/op	       3 allocs/op
+BenchmarkGetDomainStat-4   	 8364847	      2427 ns/op	    4258 B/op	       3 allocs/op
+BenchmarkGetDomainStat-4   	10431205	      2339 ns/op	    4258 B/op	       3 allocs/op
+BenchmarkGetDomainStat-4   	10649200	      2307 ns/op	    4258 B/op	       3 allocs/op
+BenchmarkGetDomainStat-4   	 9338625	      2301 ns/op	    4258 B/op	       3 allocs/op
+PASS
+ok  	github.com/astrviktor/golang_home_work/hw10_program_optimization	327.543s
