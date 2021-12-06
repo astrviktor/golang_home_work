@@ -63,7 +63,7 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 	}
 	defer fi.Close()
 
-	_, err = fi.Seek(offset, 0)
+	_, err = fi.Seek(offset, io.SeekStart)
 	if err != nil {
 		return err
 	}
