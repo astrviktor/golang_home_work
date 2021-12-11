@@ -22,6 +22,7 @@ type SimpleTelnetClient struct {
 	timeout time.Duration
 	in      io.ReadCloser
 	out     io.Writer
+	mu      *sync.Mutex
 }
 
 func (stc *SimpleTelnetClient) Connect() error {
@@ -39,17 +40,16 @@ func (stc *SimpleTelnetClient) Close() error {
 }
 
 func (stc *SimpleTelnetClient) Send() error {
-	return FromInToOut(stc.in, stc.conn)
+	return FromInToOut(stc.mu, stc.in, stc.conn)
 }
 
 func (stc *SimpleTelnetClient) Receive() error {
-	return FromInToOut(stc.conn, stc.out)
+	return FromInToOut(stc.mu, stc.conn, stc.out)
 }
 
-func FromInToOut(in io.ReadCloser, out io.Writer) error {
+func FromInToOut(mu *sync.Mutex, in io.ReadCloser, out io.Writer) error {
 	scanner := bufio.NewScanner(in)
 
-	mu := sync.Mutex{}
 	mu.Lock()
 	for scanner.Scan() {
 		if errors.Is(scanner.Err(), io.EOF) {
@@ -72,6 +72,7 @@ func FromInToOut(in io.ReadCloser, out io.Writer) error {
 }
 
 func NewTelnetClient(address string, timeout time.Duration, in io.ReadCloser, out io.Writer) TelnetClient {
-	client := SimpleTelnetClient{nil, address, timeout, in, out}
+	mu := sync.Mutex{}
+	client := SimpleTelnetClient{nil, address, timeout, in, out, &mu}
 	return &client
 }
