@@ -63,7 +63,7 @@ func TestTelnetClient(t *testing.T) {
 		wg.Wait()
 	})
 
-	t.Run("hello", func(t *testing.T) {
+	t.Run("hello from server", func(t *testing.T) {
 		l, err := net.Listen("tcp", "127.0.0.1:")
 		require.NoError(t, err)
 		defer func() { require.NoError(t, l.Close()) }()
@@ -84,10 +84,6 @@ func TestTelnetClient(t *testing.T) {
 			require.NoError(t, client.Connect())
 			defer func() { require.NoError(t, client.Close()) }()
 
-			in.WriteString("I\nam\nTELNET client\n")
-			err = client.Send()
-			require.NoError(t, err)
-
 			err = client.Receive()
 			require.NoError(t, err)
 			require.Equal(t, "Hello\nFrom\nServer\n", out.String())
@@ -101,12 +97,7 @@ func TestTelnetClient(t *testing.T) {
 			require.NotNil(t, conn)
 			defer func() { require.NoError(t, conn.Close()) }()
 
-			request := make([]byte, 1024)
-			n, err := conn.Read(request)
-			require.NoError(t, err)
-			require.Equal(t, "I\nam\nTELNET client\n", string(request)[:n])
-
-			n, err = conn.Write([]byte("Hello\nFrom\nServer\n"))
+			n, err := conn.Write([]byte("Hello\nFrom\nServer\n"))
 			require.NoError(t, err)
 			require.NotEqual(t, 0, n)
 		}()
