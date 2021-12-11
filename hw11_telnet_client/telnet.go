@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"net"
+	"sync"
 	"time"
 )
 
@@ -48,6 +49,8 @@ func (stc *SimpleTelnetClient) Receive() error {
 func FromInToOut(in io.ReadCloser, out io.Writer) error {
 	scanner := bufio.NewScanner(in)
 
+	mu := sync.Mutex{}
+	mu.Lock()
 	for scanner.Scan() {
 		if errors.Is(scanner.Err(), io.EOF) {
 			_, err := out.Write([]byte("^D\n...EOF"))
@@ -63,6 +66,7 @@ func FromInToOut(in io.ReadCloser, out io.Writer) error {
 			return err
 		}
 	}
+	mu.Unlock()
 
 	return nil
 }
