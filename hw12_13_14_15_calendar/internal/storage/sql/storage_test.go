@@ -1,6 +1,7 @@
-package memorystorage
+package sqlstorage
 
 import (
+	"context"
 	"sync"
 	"testing"
 	"time"
@@ -9,9 +10,19 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const dsn = "postgres://user:password123@localhost:5432/calendar"
+
 func TestStorage(t *testing.T) {
-	t.Run("memory storage create and get", func(t *testing.T) {
-		testStorage := New()
+	t.Skip() // Remove for SQL tests.
+
+	t.Run("sql storage create and get", func(t *testing.T) {
+		testStorage := New(dsn)
+		ctx := context.Background()
+		err := testStorage.Connect(ctx)
+		require.NoError(t, err)
+
+		err = testStorage.Clear()
+		require.NoError(t, err)
 
 		newEvent := storage.GenerateEvent()
 		uuid, err := testStorage.Create(newEvent)
@@ -23,10 +34,19 @@ func TestStorage(t *testing.T) {
 		require.True(t, ok)
 
 		require.Equal(t, newEvent, getEvent)
+
+		err = testStorage.Close(ctx)
+		require.NoError(t, err)
 	})
 
-	t.Run("memory storage create and update", func(t *testing.T) {
-		testStorage := New()
+	t.Run("sql storage create and update", func(t *testing.T) {
+		testStorage := New(dsn)
+		ctx := context.Background()
+		err := testStorage.Connect(ctx)
+		require.NoError(t, err)
+
+		err = testStorage.Clear()
+		require.NoError(t, err)
 
 		newEvent := storage.GenerateEvent()
 		uuid, err := testStorage.Create(newEvent)
@@ -44,10 +64,19 @@ func TestStorage(t *testing.T) {
 		require.True(t, ok)
 
 		require.Equal(t, updEvent, getEvent)
+
+		err = testStorage.Close(ctx)
+		require.NoError(t, err)
 	})
 
-	t.Run("memory storage create and delete", func(t *testing.T) {
-		testStorage := New()
+	t.Run("sql storage create and delete", func(t *testing.T) {
+		testStorage := New(dsn)
+		ctx := context.Background()
+		err := testStorage.Connect(ctx)
+		require.NoError(t, err)
+
+		err = testStorage.Clear()
+		require.NoError(t, err)
 
 		newEvent := storage.GenerateEvent()
 		uuid, err := testStorage.Create(newEvent)
@@ -63,14 +92,25 @@ func TestStorage(t *testing.T) {
 		require.False(t, ok)
 
 		require.Equal(t, getEvent, storage.Event{})
+
+		err = testStorage.Close(ctx)
+		require.NoError(t, err)
 	})
 
-	t.Run("memory storage create and list", func(t *testing.T) {
-		testStorage := New()
+	t.Run("sql storage create and list", func(t *testing.T) {
+		testStorage := New(dsn)
+		ctx := context.Background()
+		err := testStorage.Connect(ctx)
+		require.NoError(t, err)
+
+		err = testStorage.Clear()
+		require.NoError(t, err)
+
 		var newEvents []storage.Event
 
 		for i := 0; i < 10; i++ {
 			newEvent := storage.GenerateEvent()
+
 			newEvent.DateStart = newEvent.DateStart.Add(time.Duration(i) * time.Hour)
 			newEvent.DateEnd = newEvent.DateStart.Add(10 * time.Minute)
 
@@ -85,14 +125,24 @@ func TestStorage(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, 10, len(getEvents))
 		require.Equal(t, newEvents, getEvents)
+
+		err = testStorage.Close(ctx)
+		require.NoError(t, err)
 	})
 
-	t.Run("memory storage create and ErrDateTimeBusy error", func(t *testing.T) {
-		testStorage := New()
+	t.Run("sql storage create and ErrDateTimeBusy error", func(t *testing.T) {
+		testStorage := New(dsn)
+		ctx := context.Background()
+		err := testStorage.Connect(ctx)
+		require.NoError(t, err)
+
+		err = testStorage.Clear()
+		require.NoError(t, err)
+
 		newEvent := storage.GenerateEvent()
 
 		newEvent.DateEnd = newEvent.DateStart.Add(10 * time.Minute)
-		_, err := testStorage.Create(newEvent)
+		_, err = testStorage.Create(newEvent)
 		require.NoError(t, err)
 
 		newEvent.DateStart = newEvent.DateStart.Add(5 * time.Minute)
@@ -101,11 +151,23 @@ func TestStorage(t *testing.T) {
 		require.Error(t, err)
 
 		require.ErrorIs(t, err, storage.ErrDateTimeBusy)
+
+		err = testStorage.Close(ctx)
+		require.NoError(t, err)
 	})
 }
 
 func TestStorageMultithreading(t *testing.T) {
-	testStorage := New()
+	t.Skip() // Remove for SQL tests.
+
+	testStorage := New(dsn)
+	ctx := context.Background()
+	err := testStorage.Connect(ctx)
+	require.NoError(t, err)
+
+	err = testStorage.Clear()
+	require.NoError(t, err)
+
 	var uuidSet1, uuidSet2 []string
 
 	wg := &sync.WaitGroup{}
@@ -116,7 +178,7 @@ func TestStorageMultithreading(t *testing.T) {
 
 	go func() {
 		defer wg.Done()
-		for i := 0; i < 10_000; i++ {
+		for i := 0; i < 1000; i++ {
 			uuid, _ := testStorage.Create(storage.GenerateEvent())
 			uuidSet1 = append(uuidSet1, uuid)
 		}
@@ -124,7 +186,7 @@ func TestStorageMultithreading(t *testing.T) {
 
 	go func() {
 		defer wg.Done()
-		for i := 0; i < 10_000; i++ {
+		for i := 0; i < 1000; i++ {
 			uuid, _ := testStorage.Create(storage.GenerateEvent())
 			uuidSet2 = append(uuidSet2, uuid)
 		}
