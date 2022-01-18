@@ -62,9 +62,9 @@ func (s *Storage) Create(event storage.Event) (string, error) {
 	return ID, nil
 }
 
-// Update - Обновить (ID события, событие).
-func (s *Storage) Update(id string, event storage.Event) (bool, error) {
-	event.ID = id
+// Update - Обновить (событие).
+func (s *Storage) Update(event storage.Event) (bool, error) {
+	id := event.ID
 
 	s.mutex.Lock()
 	s.events[id] = event

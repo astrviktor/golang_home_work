@@ -20,7 +20,7 @@ type Storage interface {
 	Connect(ctx context.Context) error
 	Close(ctx context.Context) error
 	Create(event storage.Event) (string, error)
-	Update(id string, event storage.Event) (bool, error)
+	Update(event storage.Event) (bool, error)
 	Delete(id string) (bool, error)
 	Get(id string) (storage.Event, bool, error)
 	EventListStartEnd(start time.Time, end time.Time) ([]storage.Event, error)

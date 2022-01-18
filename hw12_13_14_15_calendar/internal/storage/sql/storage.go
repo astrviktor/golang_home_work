@@ -78,8 +78,9 @@ func (s *Storage) Create(event storage.Event) (string, error) {
 	return ID, nil
 }
 
-// Update - Обновить (ID события, событие).
-func (s *Storage) Update(id string, event storage.Event) (bool, error) {
+// Update - Обновить (событие).
+func (s *Storage) Update(event storage.Event) (bool, error) {
+
 	tx, err := s.db.Begin()
 	if err != nil {
 		return false, err
@@ -89,7 +90,7 @@ func (s *Storage) Update(id string, event storage.Event) (bool, error) {
 	SET title=$2, date_start=$3, date_end=$4, description=$5, user_id=$6, time_to_notification=$7
 	WHERE id = $1;`
 
-	_, err = tx.Exec(sqlStatement, id, event.Title, event.DateStart, event.DateEnd,
+	_, err = tx.Exec(sqlStatement, event.ID, event.Title, event.DateStart, event.DateEnd,
 		event.Description, event.UserID, event.TimeToNotification)
 	if err != nil {
 		return false, err

@@ -5,8 +5,8 @@ package main
 // при их конструировании только необходимые параметры, а также уменьшает вероятность циклической зависимости.
 
 import (
-	"io/ioutil"
 	"log"
+	"os"
 
 	"gopkg.in/yaml.v2"
 )
@@ -35,7 +35,7 @@ type HTTPServerConf struct {
 func NewConfig(configFile string) Config {
 	var config Config
 
-	yamlFile, err := ioutil.ReadFile(configFile)
+	yamlFile, err := os.ReadFile(configFile)
 	if err != nil {
 		log.Println(err)
 		log.Println("using default config...")
