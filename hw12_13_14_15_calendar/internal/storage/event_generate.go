@@ -16,7 +16,7 @@ func getRandomString(n int) string {
 }
 
 func GenerateEvent() Event {
-	date := time.Now()
+	date := time.Now().UTC()
 	date = time.Date(date.Year(), date.Month(), date.Day(),
 		date.Hour(), date.Minute(), date.Second(), 0, date.Location())
 
