@@ -9,6 +9,7 @@ import (
 
 	"github.com/astrviktor/golang_home_work/hw12_13_14_15_calendar/internal/app"
 	"github.com/astrviktor/golang_home_work/hw12_13_14_15_calendar/internal/logger"
+	internalgrpc "github.com/astrviktor/golang_home_work/hw12_13_14_15_calendar/internal/server/grpc"
 	internalhttp "github.com/astrviktor/golang_home_work/hw12_13_14_15_calendar/internal/server/http"
 	memorystorage "github.com/astrviktor/golang_home_work/hw12_13_14_15_calendar/internal/storage/memory"
 )
@@ -33,7 +34,8 @@ func main() {
 	storage := memorystorage.New()
 	calendar := app.New(logg, storage)
 
-	server := internalhttp.NewServer(logg, calendar, config.Server.Host, config.Server.Port)
+	httpServer := internalhttp.NewServer(logg, calendar, storage, config.HTTPServer.Host, config.HTTPServer.Port)
+	grpcServer := internalgrpc.NewServer(logg, calendar, storage, config.GRPCServer.Host, config.GRPCServer.Port)
 
 	ctx, cancel := signal.NotifyContext(context.Background(),
 		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
@@ -45,12 +47,18 @@ func main() {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
 		defer cancel()
 
-		if err := server.Stop(ctx); err != nil {
+		if err := httpServer.Stop(ctx); err != nil {
+			logg.Error("failed to stop http server: " + err.Error())
+		}
+		if err := grpcServer.Stop(ctx); err != nil {
 			logg.Error("failed to stop http server: " + err.Error())
 		}
 	}()
 
 	logg.Info("calendar is running...")
 
-	server.Start(ctx)
+	go httpServer.Start(ctx)
+	go grpcServer.Start(ctx)
+
+	<-ctx.Done()
 }

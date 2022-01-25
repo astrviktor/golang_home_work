@@ -80,7 +80,6 @@ func (s *Storage) Create(event storage.Event) (string, error) {
 
 // Update - Обновить (событие).
 func (s *Storage) Update(event storage.Event) (bool, error) {
-
 	tx, err := s.db.Begin()
 	if err != nil {
 		return false, err
@@ -182,7 +181,7 @@ func (s *Storage) Get(id string) (storage.Event, bool, error) {
 
 // EventListStartEnd - Список событий со старта (дата) по окончание (дата).
 func (s *Storage) EventListStartEnd(start time.Time, end time.Time) ([]storage.Event, error) {
-	var events []storage.Event
+	events := make([]storage.Event, 0)
 
 	sqlStatement := `SELECT id, title, date_start, date_end, description, user_id, time_to_notification
 	FROM calendar.event 

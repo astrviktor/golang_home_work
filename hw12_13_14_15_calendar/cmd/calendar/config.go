@@ -12,13 +12,14 @@ import (
 )
 
 type Config struct {
-	Logger  LoggerConf
-	Storage StorageConf
-	Server  HTTPServerConf
+	Logger     LoggerConf
+	Storage    StorageConf
+	HTTPServer HTTPServerConf
+	GRPCServer GRPCServerConf
 }
 
 type LoggerConf struct {
-	Level      string `yaml:"level"`
+	Level      int    `yaml:"level"`
 	TimeFormat string `yaml:"timeformat"`
 }
 
@@ -28,6 +29,11 @@ type StorageConf struct {
 }
 
 type HTTPServerConf struct {
+	Host string `yaml:"host"`
+	Port string `yaml:"port"`
+}
+
+type GRPCServerConf struct {
 	Host string `yaml:"host"`
 	Port string `yaml:"port"`
 }
@@ -54,10 +60,9 @@ func NewConfig(configFile string) Config {
 
 func DefaultConfig() Config {
 	return Config{
-		LoggerConf{Level: "INFO", TimeFormat: "2006-01-02T15:04:05Z07:00"},
-		StorageConf{Mode: "in-memory", DSN: "postgres://user:password123@localhost:5432/calendar?sslmode=require"},
+		LoggerConf{Level: 1, TimeFormat: "2006-01-02T15:04:05Z07:00"},
+		StorageConf{Mode: "in-memory", DSN: "postgres://user:password123@localhost:5432/calendar"},
 		HTTPServerConf{Host: "", Port: "8888"},
+		GRPCServerConf{Host: "", Port: "9999"},
 	}
 }
-
-// TODO

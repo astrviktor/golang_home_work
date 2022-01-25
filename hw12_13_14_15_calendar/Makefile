@@ -4,6 +4,16 @@ DOCKER_IMG="calendar:develop"
 GIT_HASH := $(shell git log --format="%h" -n 1)
 LDFLAGS := -X main.release="develop" -X main.buildDate=$(shell date -u +%Y-%m-%dT%H:%M:%S) -X main.gitHash=$(GIT_HASH)
 
+generate:
+	rm -rf internal/server/grpc/pb
+	mkdir -p internal/server/grpc/pb
+
+	protoc \
+		--proto_path=api/ \
+		--go_out=internal/server/grpc/pb \
+		--go-grpc_out=internal/server/grpc/pb \
+		api/*.proto
+
 build:
 	go build -v -o $(BIN) -ldflags "$(LDFLAGS)" ./cmd/calendar
 

@@ -95,7 +95,7 @@ func (s *Storage) Get(id string) (storage.Event, bool, error) {
 
 // EventListStartEnd - Список событий со старта (дата) по окончание (дата).
 func (s *Storage) EventListStartEnd(start time.Time, end time.Time) ([]storage.Event, error) {
-	var events []storage.Event
+	events := make([]storage.Event, 0)
 
 	s.mutex.Lock()
 	for _, event := range s.events {

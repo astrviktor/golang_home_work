@@ -2,88 +2,61 @@ package logger
 
 import (
 	"fmt"
-	"net"
-	"net/http"
 	"os"
-	"time"
 )
 
 type Logger struct {
-	level      string
+	level      int
 	timeFormat string
 }
 
-// DEBUG — логирование всех событий при отладке.
 // INFO — логирование ошибок, предупреждений и сообщений.
+// DEBUG — логирование всех событий при отладке.
 // WARN — логирование ошибок и предупреждений.
-// ERROR — логирование всех ошибок.
+// ERROR — логирование ошибок.
 
 const (
-	DEBUG = "DEBUG"
-	INFO  = "INFO"
-	ERROR = "ERROR"
-	WARN  = "WARN"
+	INFO  = 1
+	DEBUG = 2
+	WARN  = 3
+	ERROR = 4
 )
 
-func New(level string, timeFormat string) *Logger {
+func New(level int, timeFormat string) *Logger {
 	return &Logger{level, timeFormat}
 }
 
-func (l *Logger) Debug(msg ...interface{}) {
-	if l.level == DEBUG {
-		fmt.Print("DEBUG: ")
-		fmt.Println(msg...)
+func (l *Logger) Info(msg string) {
+	if l.level <= INFO {
+		fmt.Printf("INFO: %s\n", msg)
 	}
 }
 
-func (l *Logger) Info(msg ...interface{}) {
-	if l.level == DEBUG || l.level == INFO || l.level == ERROR {
-		fmt.Print("INFO: ")
-		fmt.Println(msg...)
+func (l *Logger) Debug(msg string) {
+	if l.level <= DEBUG {
+		fmt.Printf("DEBUG: %s\n", msg)
 	}
 }
 
-func (l *Logger) Warn(msg ...interface{}) {
-	if l.level == DEBUG || l.level == INFO || l.level == WARN || l.level == ERROR {
-		fmt.Print("WARN: ")
-		fmt.Println(msg...)
+func (l *Logger) Warn(msg string) {
+	if l.level <= WARN {
+		fmt.Printf("WARN: %s", msg)
 	}
 }
 
-func (l *Logger) Error(msg ...interface{}) {
-	fmt.Print("ERROR: ")
-	fmt.Println(msg...)
-}
-
-func (l *Logger) Fatal(msg ...interface{}) {
-	fmt.Print("ERROR: ")
-	fmt.Println(msg...)
-	os.Exit(1)
-}
-
-type StatusRecorder struct {
-	http.ResponseWriter
-	Status int
-}
-
-func (r *StatusRecorder) WriteHeader(status int) {
-	r.Status = status
-	r.ResponseWriter.WriteHeader(status)
-}
-
-func (l *Logger) WithLogging(h http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		now := "[" + time.Now().Format(l.timeFormat) + "]"
-		start := time.Now()
-		ip, _, _ := net.SplitHostPort(r.RemoteAddr)
-		userAgent := r.UserAgent()
-
-		recorder := &StatusRecorder{
-			ResponseWriter: w,
-			Status:         0,
-		}
-
-		h(recorder, r)
-		l.Info(ip, now, r.Method, r.RequestURI, r.Proto, recorder.Status, time.Since(start), userAgent)
+func (l *Logger) Error(msg string) {
+	if l.level <= ERROR {
+		fmt.Printf("ERROR: %s\n", msg)
 	}
+}
+
+func (l *Logger) Fatal(msg string) {
+	if l.level <= ERROR {
+		fmt.Printf("ERROR: %s", msg)
+		os.Exit(1)
+	}
+}
+
+func (l *Logger) GetTimeFormat() string {
+	return l.timeFormat
 }
