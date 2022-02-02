@@ -30,3 +30,11 @@ func GenerateEvent() Event {
 		TimeToNotification: rand.Intn(30) + 30,                    //nolint:gosec
 	}
 }
+
+func GenerateEventDate(start, end time.Time) Event {
+	event := GenerateEvent()
+	event.DateStart = start
+	event.DateEnd = end
+
+	return event
+}

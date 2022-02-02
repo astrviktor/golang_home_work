@@ -1,11 +1,7 @@
 package internalhttp
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
-	"io"
-	"net/http"
 	"os/signal"
 	"syscall"
 	"testing"
@@ -33,50 +29,98 @@ func TestHTTPServer(t *testing.T) {
 	go httpServer.Start(ctx)
 	time.Sleep(2 * time.Second)
 
+	client := NewClient("127.0.0.1", "7777", time.Second)
+
+	date, err := time.Parse("2006-01-02", "2022-01-01")
+	require.NoError(t, err)
+
 	t.Run("http test create event and get event", func(t *testing.T) {
-		// create event
-		eventCreate := generate.GenerateEvent()
+		newEvent := generate.GenerateEventDate(date, date.Add(time.Second))
 
-		eventBytes, err := json.Marshal(eventCreate)
+		id, err := client.CreateEvent(newEvent)
+		require.NoError(t, err)
+		require.Len(t, id, 36)
+		newEvent.ID = id
+
+		getEvent, err := client.GetEvent(id)
 		require.NoError(t, err)
 
-		body := bytes.NewReader(eventBytes)
+		require.Equal(t, newEvent, getEvent)
+	})
 
-		client := http.Client{Timeout: time.Second * 5}
-		resp, err := client.Post("http://127.0.0.1:7777/event", "application/json", body) //nolint:noctx
+	t.Run("http test create event and update event", func(t *testing.T) {
+		newEvent := generate.GenerateEventDate(date.Add(2*time.Second), date.Add(3*time.Second))
+
+		id, err := client.CreateEvent(newEvent)
 		require.NoError(t, err)
-		require.Equal(t, http.StatusOK, resp.StatusCode)
+		require.Len(t, id, 36)
+		newEvent.ID = id
 
-		buffer := make([]byte, 1024)
-		n, err := resp.Body.Read(buffer)
-		require.ErrorIs(t, err, io.EOF)
-		bytes := buffer[:n]
-
-		resultCreate := ResponseID{}
-		err = json.Unmarshal(bytes, &resultCreate)
+		updEvent := generate.GenerateEventDate(date.Add(4*time.Second), date.Add(5*time.Second))
+		updEvent.ID = id
+		ok, err := client.UpdateEvent(updEvent)
 		require.NoError(t, err)
-		eventCreate.ID = resultCreate.ID
+		require.True(t, ok)
 
-		err = resp.Body.Close()
-		require.NoError(t, err)
-
-		// get event
-		resp, err = client.Get("http://127.0.0.1:7777/event?id=" + resultCreate.ID) //nolint:noctx
-		require.NoError(t, err)
-		require.Equal(t, http.StatusOK, resp.StatusCode)
-
-		n, err = resp.Body.Read(buffer)
-		require.ErrorIs(t, err, io.EOF)
-		bytes = buffer[:n]
-
-		resultGet := ResponseEvent{}
-		err = json.Unmarshal(bytes, &resultGet)
+		getEvent, err := client.GetEvent(id)
 		require.NoError(t, err)
 
-		eventGet := resultGet.Event
-		require.Equal(t, eventCreate, eventGet)
+		require.Equal(t, updEvent, getEvent)
+	})
 
-		err = resp.Body.Close()
+	t.Run("http test create event and delete event", func(t *testing.T) {
+		newEvent := generate.GenerateEventDate(date.Add(6*time.Second), date.Add(7*time.Second))
+
+		id, err := client.CreateEvent(newEvent)
 		require.NoError(t, err)
+		require.Len(t, id, 36)
+		newEvent.ID = id
+
+		ok, err := client.DeleteEvent(id)
+		require.NoError(t, err)
+		require.True(t, ok)
+
+		ok, err = client.DeleteEvent(id)
+		require.Error(t, err)
+		require.False(t, ok)
+	})
+
+	t.Run("http test create and list", func(t *testing.T) {
+		dateA, err := time.Parse("2006-01-02", "2022-02-07")
+		require.NoError(t, err)
+		dateB, err := time.Parse("2006-01-02", "2022-02-08")
+		require.NoError(t, err)
+		dateC, err := time.Parse("2006-01-02", "2022-02-14")
+		require.NoError(t, err)
+
+		eventA := generate.GenerateEventDate(dateA, dateA.Add(time.Hour))
+		id, err := client.CreateEvent(eventA)
+		require.NoError(t, err)
+		require.Len(t, id, 36)
+		eventA.ID = id
+
+		eventB := generate.GenerateEventDate(dateB, dateB.Add(time.Hour))
+		id, err = client.CreateEvent(eventB)
+		require.NoError(t, err)
+		require.Len(t, id, 36)
+		eventB.ID = id
+
+		eventC := generate.GenerateEventDate(dateC, dateC.Add(time.Hour))
+		id, err = client.CreateEvent(eventC)
+		require.NoError(t, err)
+		require.Len(t, id, 36)
+		eventC.ID = id
+
+		events, err := client.GetListDay("2022-02-08")
+		require.NoError(t, err)
+		require.Equal(t, 1, len(events))
+
+		events, err = client.GetListWeek("2022-02-07")
+		require.NoError(t, err)
+		require.Equal(t, 2, len(events))
+
+		events, err = client.GetListMonth("2022-02-01")
+		require.NoError(t, err)
+		require.Equal(t, 3, len(events))
 	})
 }
