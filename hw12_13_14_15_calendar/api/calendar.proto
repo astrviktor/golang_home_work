@@ -42,21 +42,17 @@ message Date {
 
 message ResponseID {
   string id = 1;
-  string error = 2;
 }
 
 message ResponseEvent {
   Event event = 1;
-  string error = 2;
 }
 
 message ResponseEventSlice {
   repeated Event events = 1;
-  string error = 2;
 }
 
 message ResponseStatus {
   bool status = 1;
-  string error = 2;
 }
 

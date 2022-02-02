@@ -55,7 +55,6 @@ func TestHTTPServer(t *testing.T) {
 		resultCreate := ResponseID{}
 		err = json.Unmarshal(bytes, &resultCreate)
 		require.NoError(t, err)
-		require.Equal(t, "", resultCreate.Error)
 		eventCreate.ID = resultCreate.ID
 
 		err = resp.Body.Close()

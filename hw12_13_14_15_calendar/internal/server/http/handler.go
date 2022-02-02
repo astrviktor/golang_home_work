@@ -11,63 +11,27 @@ import (
 	"github.com/astrviktor/golang_home_work/hw12_13_14_15_calendar/internal/storage"
 )
 
+type ResponseError struct {
+	Error string `json:"error"`
+}
+
 type ResponseEvent struct {
 	Event storage.Event `json:"event"`
-	Error string        `json:"error"`
 }
 
 type ResponseEventSlice struct {
 	Events []storage.Event `json:"events"`
-	Error  string          `json:"error"`
 }
 
 type ResponseID struct {
-	ID    string `json:"id"`
-	Error string `json:"error"`
+	ID string `json:"id"`
 }
 
 type ResponseStatus struct {
-	Status bool   `json:"status"`
-	Error  string `json:"error"`
+	Status bool `json:"status"`
 }
 
-func (s *Server) WriteResponseEvent(w http.ResponseWriter, resp *ResponseEvent) {
-	resBuf, err := json.Marshal(resp)
-	if err != nil {
-		s.logger.Error(fmt.Sprintf("response marshal error: %s", err))
-	}
-	_, err = w.Write(resBuf)
-	if err != nil {
-		s.logger.Error(fmt.Sprintf("response marshal error: %s", err))
-	}
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-}
-
-func (s *Server) WriteResponseEventSlice(w http.ResponseWriter, resp *ResponseEventSlice) {
-	resBuf, err := json.Marshal(resp)
-	if err != nil {
-		s.logger.Error(fmt.Sprintf("response marshal error: %s", err))
-	}
-	_, err = w.Write(resBuf)
-	if err != nil {
-		s.logger.Error(fmt.Sprintf("response marshal error: %s", err))
-	}
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-}
-
-func (s *Server) WriteResponseID(w http.ResponseWriter, resp *ResponseID) {
-	resBuf, err := json.Marshal(resp)
-	if err != nil {
-		s.logger.Error(fmt.Sprintf("response marshal error: %s", err))
-	}
-	_, err = w.Write(resBuf)
-	if err != nil {
-		s.logger.Error(fmt.Sprintf("response marshal error: %s", err))
-	}
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-}
-
-func (s *Server) WriteResponseStatus(w http.ResponseWriter, resp *ResponseStatus) {
+func (s *Server) WriteResponse(w http.ResponseWriter, resp interface{}) {
 	resBuf, err := json.Marshal(resp)
 	if err != nil {
 		s.logger.Error(fmt.Sprintf("response marshal error: %s", err))
@@ -100,33 +64,29 @@ func (s *Server) Event(w http.ResponseWriter, r *http.Request) {
 // curl --request GET 'http://127.0.0.1:8888/event?id=d9aed75b-3c9a-423b-8455-7ea824e9766e'
 
 func (s *Server) GetEvent(w http.ResponseWriter, r *http.Request) {
-	resp := &ResponseEvent{}
 	args := r.URL.Query()
 	id := args.Get("id")
 	if len(id) == 0 {
-		resp.Error = "id not found"
 		w.WriteHeader(http.StatusBadRequest)
-		s.WriteResponseEvent(w, resp)
+		s.WriteResponse(w, &ResponseError{"error while getting id from request"})
 		return
 	}
 
 	event, ok, err := s.storage.Get(id)
 	if err != nil {
-		resp.Error = fmt.Sprint(err)
 		w.WriteHeader(http.StatusInternalServerError)
-		s.WriteResponseEvent(w, resp)
+		s.WriteResponse(w, &ResponseError{err.Error()})
 		return
 	}
 
 	if !ok {
-		w.WriteHeader(http.StatusOK)
-		s.WriteResponseEvent(w, resp)
+		w.WriteHeader(http.StatusNotFound)
+		s.WriteResponse(w, &ResponseError{"event not found"})
 		return
 	}
 
-	resp.Event = event
 	w.WriteHeader(http.StatusOK)
-	s.WriteResponseEvent(w, resp)
+	s.WriteResponse(w, &ResponseEvent{event})
 
 	s.logger.Info(fmt.Sprintf("get event %#v", event))
 }
@@ -146,36 +106,31 @@ curl --request POST 'http://127.0.0.1:8888/event' \
 */
 
 func (s *Server) CreateEvent(w http.ResponseWriter, r *http.Request) {
-	resp := &ResponseID{}
 	buf := make([]byte, r.ContentLength)
 	_, err := r.Body.Read(buf)
 	if err != nil && !errors.Is(err, io.EOF) {
-		resp.Error = err.Error()
 		w.WriteHeader(http.StatusBadRequest)
-		s.WriteResponseID(w, resp)
+		s.WriteResponse(w, &ResponseError{fmt.Sprintf("error while getting data from request %s", err)})
 		return
 	}
 
 	event := storage.Event{}
 	err = json.Unmarshal(buf, &event)
 	if err != nil {
-		resp.Error = err.Error()
 		w.WriteHeader(http.StatusBadRequest)
-		s.WriteResponseID(w, resp)
+		s.WriteResponse(w, &ResponseError{fmt.Sprintf("error while converting data from request %s", err)})
 		return
 	}
 
 	uuid, err := s.storage.Create(event)
 	if err != nil {
-		resp.Error = fmt.Sprint(err)
 		w.WriteHeader(http.StatusInternalServerError)
-		s.WriteResponseID(w, resp)
+		s.WriteResponse(w, &ResponseError{fmt.Sprintf("error while create event %s", err)})
 		return
 	}
 
-	resp.ID = uuid
 	w.WriteHeader(http.StatusOK)
-	s.WriteResponseID(w, resp)
+	s.WriteResponse(w, &ResponseID{ID: uuid})
 
 	s.logger.Info(fmt.Sprintf("create new event %#v", event))
 }
@@ -195,43 +150,37 @@ curl --request PUT 'http://127.0.0.1:8888/event' \
 */
 
 func (s *Server) UpdateEvent(w http.ResponseWriter, r *http.Request) {
-	resp := &ResponseStatus{}
-
 	buf := make([]byte, r.ContentLength)
 	_, err := r.Body.Read(buf)
 	if err != nil && !errors.Is(err, io.EOF) {
-		resp.Error = err.Error()
 		w.WriteHeader(http.StatusBadRequest)
-		s.WriteResponseStatus(w, resp)
+		s.WriteResponse(w, &ResponseError{fmt.Sprintf("error while getting data from request %s", err)})
 		return
 	}
 
 	event := storage.Event{}
 	err = json.Unmarshal(buf, &event)
 	if err != nil {
-		resp.Error = err.Error()
 		w.WriteHeader(http.StatusBadRequest)
-		s.WriteResponseStatus(w, resp)
+		s.WriteResponse(w, &ResponseError{fmt.Sprintf("error while converting data from request %s", err)})
 		return
 	}
 
 	ok, err := s.storage.Update(event)
 	if err != nil {
-		resp.Error = fmt.Sprint(err)
 		w.WriteHeader(http.StatusInternalServerError)
-		s.WriteResponseStatus(w, resp)
+		s.WriteResponse(w, &ResponseError{fmt.Sprintf("error while update event %s", err)})
 		return
 	}
 
 	if !ok {
-		w.WriteHeader(http.StatusOK)
-		s.WriteResponseStatus(w, resp)
+		w.WriteHeader(http.StatusNotFound)
+		s.WriteResponse(w, &ResponseError{"event not found"})
 		return
 	}
 
-	resp.Status = true
 	w.WriteHeader(http.StatusOK)
-	s.WriteResponseStatus(w, resp)
+	s.WriteResponse(w, &ResponseStatus{Status: true})
 
 	s.logger.Info(fmt.Sprintf("update event %#v", event))
 }
@@ -239,33 +188,29 @@ func (s *Server) UpdateEvent(w http.ResponseWriter, r *http.Request) {
 // curl --request DELETE 'http://127.0.0.1:8888/event?id=d9aed75b-3c9a-423b-8455-7ea824e9766e'
 
 func (s *Server) DeleteEvent(w http.ResponseWriter, r *http.Request) {
-	resp := &ResponseStatus{}
 	args := r.URL.Query()
 	id := args.Get("id")
 	if len(id) == 0 {
-		resp.Error = "id not found"
 		w.WriteHeader(http.StatusBadRequest)
-		s.WriteResponseStatus(w, resp)
+		s.WriteResponse(w, &ResponseError{"error while getting id from request"})
 		return
 	}
 
 	ok, err := s.storage.Delete(id)
 	if err != nil {
-		resp.Error = fmt.Sprint(err)
 		w.WriteHeader(http.StatusInternalServerError)
-		s.WriteResponseStatus(w, resp)
+		s.WriteResponse(w, &ResponseError{fmt.Sprintf("error while delete event %s", err)})
 		return
 	}
 
 	if !ok {
-		w.WriteHeader(http.StatusOK)
-		s.WriteResponseStatus(w, resp)
+		w.WriteHeader(http.StatusNotFound)
+		s.WriteResponse(w, &ResponseError{"event not found"})
 		return
 	}
 
-	resp.Status = true
 	w.WriteHeader(http.StatusOK)
-	s.WriteResponseStatus(w, resp)
+	s.WriteResponse(w, &ResponseStatus{Status: true})
 
 	s.logger.Info(fmt.Sprintf("delete event %s", id))
 }
@@ -279,14 +224,12 @@ const (
 )
 
 func (s *Server) GetList(w http.ResponseWriter, r *http.Request, period Period) {
-	resp := &ResponseEventSlice{}
 	args := r.URL.Query()
 	str := args.Get("date")
 	date, err := time.Parse("2006-01-02", str)
 	if err != nil {
-		resp.Error = "date format error"
 		w.WriteHeader(http.StatusBadRequest)
-		s.WriteResponseEventSlice(w, resp)
+		s.WriteResponse(w, &ResponseError{fmt.Sprintf("error while getting data from request %s", err)})
 		return
 	}
 
@@ -302,15 +245,13 @@ func (s *Server) GetList(w http.ResponseWriter, r *http.Request, period Period) 
 	}
 
 	if err != nil {
-		resp.Error = fmt.Sprint(err)
 		w.WriteHeader(http.StatusInternalServerError)
-		s.WriteResponseEventSlice(w, resp)
+		s.WriteResponse(w, &ResponseError{fmt.Sprintf("error while get list %s", err)})
 		return
 	}
 
-	resp.Events = events
 	w.WriteHeader(http.StatusOK)
-	s.WriteResponseEventSlice(w, resp)
+	s.WriteResponse(w, &ResponseEventSlice{Events: events})
 
 	s.logger.Info(fmt.Sprintf("get events list %#v", events))
 }

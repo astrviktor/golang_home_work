@@ -2,6 +2,7 @@ package internalgrpc
 
 import (
 	"context"
+	"errors"
 	"log"
 	"net"
 	"time"
@@ -71,7 +72,7 @@ func (s *Server) CreateEvent(ctx context.Context, req *pb.Event) (*pb.ResponseID
 		return nil, status.Error(codes.Internal, "error on create event")
 	}
 
-	return &pb.ResponseID{Id: uuid, Error: ""}, nil
+	return &pb.ResponseID{Id: uuid}, nil
 }
 
 func (s *Server) GetEvent(ctx context.Context, req *pb.ID) (*pb.ResponseEvent, error) {
@@ -81,10 +82,10 @@ func (s *Server) GetEvent(ctx context.Context, req *pb.ID) (*pb.ResponseEvent, e
 	}
 
 	if !ok {
-		return &pb.ResponseEvent{Event: &pb.Event{}, Error: ""}, nil
+		return &pb.ResponseEvent{Event: &pb.Event{}}, errors.New("not found")
 	}
 
-	return &pb.ResponseEvent{Event: storageEventToPbEvent(event), Error: ""}, nil
+	return &pb.ResponseEvent{Event: storageEventToPbEvent(event)}, nil
 }
 
 func (s *Server) UpdateEvent(ctx context.Context, req *pb.Event) (*pb.ResponseStatus, error) {
@@ -96,10 +97,10 @@ func (s *Server) UpdateEvent(ctx context.Context, req *pb.Event) (*pb.ResponseSt
 	}
 
 	if !ok {
-		return &pb.ResponseStatus{Status: false, Error: ""}, nil
+		return &pb.ResponseStatus{Status: false}, errors.New("not found")
 	}
 
-	return &pb.ResponseStatus{Status: true, Error: ""}, nil
+	return &pb.ResponseStatus{Status: true}, nil
 }
 
 func (s *Server) DeleteEvent(ctx context.Context, req *pb.ID) (*pb.ResponseStatus, error) {
@@ -109,10 +110,10 @@ func (s *Server) DeleteEvent(ctx context.Context, req *pb.ID) (*pb.ResponseStatu
 	}
 
 	if !ok {
-		return &pb.ResponseStatus{Status: false, Error: ""}, nil
+		return &pb.ResponseStatus{Status: false}, errors.New("not found")
 	}
 
-	return &pb.ResponseStatus{Status: true, Error: ""}, nil
+	return &pb.ResponseStatus{Status: true}, nil
 }
 
 func (s *Server) GetList(ctx context.Context, req *pb.Date) (*pb.ResponseEventSlice, error) {
@@ -143,7 +144,7 @@ func (s *Server) GetList(ctx context.Context, req *pb.Date) (*pb.ResponseEventSl
 		pbEvents[idx] = storageEventToPbEvent(event)
 	}
 
-	return &pb.ResponseEventSlice{Events: pbEvents, Error: ""}, nil
+	return &pb.ResponseEventSlice{Events: pbEvents}, nil
 }
 
 func (s *Server) Start(ctx context.Context) {
