@@ -59,6 +59,10 @@ func (p *Producer) SendMessage(msg []byte) error {
 }
 
 func (p *Producer) Produce(storage storage.Storage) error {
+	if err := storage.DeleteOlder(time.Now().AddDate(-1, 0, 0)); err != nil {
+		return fmt.Errorf("error deleting events older then year %w", err)
+	}
+
 	notifications, err := storage.GetForNotification(time.Now())
 	if err != nil {
 		return fmt.Errorf("error get notifications from storage %w", err)

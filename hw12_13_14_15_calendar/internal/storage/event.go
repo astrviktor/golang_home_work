@@ -32,4 +32,5 @@ type Storage interface {
 	EventListMonth(date time.Time) ([]Event, error)
 	Notified(id string) error
 	GetForNotification(date time.Time) ([]Notification, error)
+	DeleteOlder(date time.Time) error
 }

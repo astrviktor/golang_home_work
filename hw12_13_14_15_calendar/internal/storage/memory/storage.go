@@ -175,3 +175,15 @@ func (s *Storage) GetForNotification(date time.Time) ([]storage.Notification, er
 
 	return notifications, nil
 }
+
+func (s *Storage) DeleteOlder(date time.Time) error {
+	s.mutex.Lock()
+	for _, event := range s.events {
+		if date.After(event.DateStart) {
+			delete(s.events, event.ID)
+		}
+	}
+	s.mutex.Unlock()
+
+	return nil
+}

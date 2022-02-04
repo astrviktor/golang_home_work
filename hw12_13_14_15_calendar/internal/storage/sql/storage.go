@@ -301,3 +301,24 @@ func (s *Storage) GetForNotification(date time.Time) ([]storage.Notification, er
 
 	return notifications, nil
 }
+
+func (s *Storage) DeleteOlder(date time.Time) error {
+	tx, err := s.db.Begin()
+	if err != nil {
+		return err
+	}
+
+	sqlStatement := `DELETE FROM calendar.event WHERE date_start < $1;`
+
+	_, err = tx.Exec(sqlStatement, date)
+	if err != nil {
+		return err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
