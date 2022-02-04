@@ -1,4 +1,6 @@
-BIN := "./bin/calendar"
+BIN_CALENDAR := "./bin/calendar"
+BIN_CALENDAR_SCHEDULER := "./bin/calendar_scheduler"
+BIN_CALENDAR_SENDER := "./bin/calendar_sender"
 DOCKER_IMG="calendar:develop"
 
 GIT_HASH := $(shell git log --format="%h" -n 1)
@@ -15,10 +17,12 @@ generate:
 		api/*.proto
 
 build:
-	go build -v -o $(BIN) -ldflags "$(LDFLAGS)" ./cmd/calendar
+	go build -v -o $(BIN_CALENDAR) -ldflags "$(LDFLAGS)" ./cmd/calendar
+	go build -v -o $(BIN_CALENDAR_SCHEDULER) -ldflags "$(LDFLAGS)" ./cmd/calendar_scheduler
+	go build -v -o $(BIN_CALENDAR_SENDER) -ldflags "$(LDFLAGS)" ./cmd/calendar_sender
 
 run: build
-	$(BIN) -config ./configs/config.yaml
+	$(BIN_CALENDAR) --config ./configs/calendar_config.yaml
 
 build-img:
 	docker build \
@@ -30,7 +34,7 @@ run-img: build-img
 	docker run -p 8888:8888 $(DOCKER_IMG)
 
 version: build
-	$(BIN) version
+	$(BIN_CALENDAR) version
 
 test:
 	go test -race ./internal/...
@@ -40,5 +44,11 @@ install-lint-deps:
 
 lint: install-lint-deps
 	golangci-lint run ./...
+
+compose-up:
+	docker-compose -f deployments/docker-compose.yaml up --remove-orphans -d
+
+compose-down:
+	docker-compose -f deployments/docker-compose.yaml down
 
 .PHONY: build run build-img run-img version test lint

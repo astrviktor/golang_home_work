@@ -19,7 +19,7 @@ import (
 type Server struct {
 	logger  app.Logger
 	app     Application
-	storage app.Storage
+	storage storage.Storage
 	addr    string
 	pb.UnimplementedCalendarServer
 }
@@ -27,7 +27,7 @@ type Server struct {
 type Application interface { // TODO
 }
 
-func NewServer(logger app.Logger, app Application, storage app.Storage, host string, port string) *Server {
+func NewServer(logger app.Logger, app Application, storage storage.Storage, host string, port string) *Server {
 	return &Server{
 		logger:  logger,
 		app:     app,

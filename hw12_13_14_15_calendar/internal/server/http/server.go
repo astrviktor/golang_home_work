@@ -6,19 +6,20 @@ import (
 	"net/http"
 
 	"github.com/astrviktor/golang_home_work/hw12_13_14_15_calendar/internal/app"
+	"github.com/astrviktor/golang_home_work/hw12_13_14_15_calendar/internal/storage"
 )
 
 type Server struct {
 	logger  app.Logger
 	app     Application
-	storage app.Storage
+	storage storage.Storage
 	addr    string
 }
 
 type Application interface { // TODO
 }
 
-func NewServer(logger app.Logger, app Application, storage app.Storage, host string, port string) *Server {
+func NewServer(logger app.Logger, app Application, storage storage.Storage, host string, port string) *Server {
 	return &Server{logger, app, storage, net.JoinHostPort(host, port)}
 }
 

@@ -8,27 +8,29 @@ import (
 	"time"
 
 	"github.com/astrviktor/golang_home_work/hw12_13_14_15_calendar/internal/app"
+	"github.com/astrviktor/golang_home_work/hw12_13_14_15_calendar/internal/config"
 	"github.com/astrviktor/golang_home_work/hw12_13_14_15_calendar/internal/logger"
 	internalgrpc "github.com/astrviktor/golang_home_work/hw12_13_14_15_calendar/internal/server/grpc"
 	internalhttp "github.com/astrviktor/golang_home_work/hw12_13_14_15_calendar/internal/server/http"
 	memorystorage "github.com/astrviktor/golang_home_work/hw12_13_14_15_calendar/internal/storage/memory"
+	"github.com/astrviktor/golang_home_work/hw12_13_14_15_calendar/internal/version"
 )
 
 var configFile string
 
 func init() {
-	flag.StringVar(&configFile, "config", "/etc/calendar/config.yaml", "Path to configuration file")
+	flag.StringVar(&configFile, "config", "/etc/calendar/calendar_config.yaml", "Path to configuration file")
 }
 
 func main() {
 	flag.Parse()
 
 	if flag.Arg(0) == "version" {
-		printVersion()
+		version.PrintVersion()
 		return
 	}
 
-	config := NewConfig(configFile)
+	config := config.NewCalendarConfig(configFile)
 	logg := logger.New(config.Logger.Level, config.Logger.TimeFormat)
 
 	storage := memorystorage.New()
@@ -61,4 +63,5 @@ func main() {
 	go grpcServer.Start(ctx)
 
 	<-ctx.Done()
+	logg.Info("calendar is done...")
 }

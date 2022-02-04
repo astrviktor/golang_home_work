@@ -136,3 +136,42 @@ func (s *Storage) EventListMonth(date time.Time) ([]storage.Event, error) {
 
 	return s.EventListStartEnd(dateStart, dateEnd)
 }
+
+func (s *Storage) Notified(id string) error {
+	s.mutex.Lock()
+	event, ok := s.events[id]
+	if ok {
+		event.Notified = true
+		s.events[id] = event
+	}
+	s.mutex.Unlock()
+
+	return nil
+}
+
+func (s *Storage) GetForNotification(date time.Time) ([]storage.Notification, error) {
+	notifications := make([]storage.Notification, 0)
+
+	s.mutex.Lock()
+	for _, event := range s.events {
+		duration := time.Duration(event.TimeToNotification) * time.Minute
+		dateToNotification := event.DateStart.Add(-duration)
+		if !event.Notified && dateToNotification.Before(date) {
+			notification := storage.Notification{
+				ID:        event.ID,
+				Title:     event.Title,
+				DateStart: event.DateStart,
+				UserID:    event.UserID,
+			}
+
+			notifications = append(notifications, notification)
+		}
+	}
+	s.mutex.Unlock()
+
+	sort.SliceStable(notifications, func(i, j int) bool {
+		return notifications[i].DateStart.Before(notifications[j].DateStart)
+	})
+
+	return notifications, nil
+}

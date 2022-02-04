@@ -241,3 +241,63 @@ func (s *Storage) EventListMonth(date time.Time) ([]storage.Event, error) {
 
 	return s.EventListStartEnd(dateStart, dateEnd)
 }
+
+func (s *Storage) Notified(id string) error {
+	tx, err := s.db.Begin()
+	if err != nil {
+		return err
+	}
+
+	sqlStatement := `UPDATE calendar.event 
+	SET notified=true
+	WHERE id = $1;`
+
+	_, err = tx.Exec(sqlStatement, id)
+	if err != nil {
+		return err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Storage) GetForNotification(date time.Time) ([]storage.Notification, error) {
+	notifications := make([]storage.Notification, 0)
+
+	sqlStatement := `SELECT id, title, date_start, user_id
+	FROM calendar.event 
+	WHERE notified = false AND date_start - time_to_notification * interval '1 minute' < $1
+	ORDER BY date_start;`
+
+	rows, err := s.db.Query(sqlStatement, date.Format(time.RFC3339))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var notification storage.Notification
+
+		err := rows.Scan(&notification.ID, &notification.Title, &notification.DateStart, &notification.UserID)
+
+		if errors.Is(err, sql.ErrNoRows) {
+			return notifications, nil
+		}
+
+		if err != nil {
+			return notifications, err
+		}
+
+		if rows.Err() != nil {
+			return notifications, err
+		}
+
+		notifications = append(notifications, notification)
+	}
+
+	return notifications, nil
+}
