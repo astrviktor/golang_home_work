@@ -12,12 +12,13 @@ import (
 )
 
 type Storage struct {
-	dsn string
-	db  *sql.DB
+	dsn                string
+	db                 *sql.DB
+	maxConnectAttempts int
 }
 
-func New(dsn string) *Storage {
-	return &Storage{dsn, nil}
+func New(dsn string, maxConnectAttempts int) *Storage {
+	return &Storage{dsn, nil, maxConnectAttempts}
 }
 
 func (s *Storage) Connect(ctx context.Context) error {
@@ -26,7 +27,14 @@ func (s *Storage) Connect(ctx context.Context) error {
 		return err
 	}
 
-	err = db.PingContext(ctx)
+	for i := 0; i < s.maxConnectAttempts; i++ {
+		err = db.Ping()
+		if err == nil {
+			break
+		}
+		time.Sleep(5 * time.Second)
+	}
+
 	if err != nil {
 		return err
 	}
@@ -151,7 +159,7 @@ func (s *Storage) Clear() error {
 func (s *Storage) Get(id string) (storage.Event, bool, error) {
 	var event storage.Event
 
-	sqlStatement := `SELECT id, title, date_start, date_end, description, user_id, time_to_notification
+	sqlStatement := `SELECT id, title, date_start, date_end, description, user_id, time_to_notification, notified
 	FROM calendar.event 
 	WHERE id = $1;`
 
@@ -163,7 +171,7 @@ func (s *Storage) Get(id string) (storage.Event, bool, error) {
 
 	rows.Next()
 	err = rows.Scan(&event.ID, &event.Title, &event.DateStart, &event.DateEnd, &event.Description,
-		&event.UserID, &event.TimeToNotification)
+		&event.UserID, &event.TimeToNotification, &event.Notified)
 	if errors.Is(err, sql.ErrNoRows) {
 		return event, false, nil
 	}
@@ -249,7 +257,7 @@ func (s *Storage) Notified(id string) error {
 	}
 
 	sqlStatement := `UPDATE calendar.event 
-	SET notified=true
+	SET notified='yes'
 	WHERE id = $1;`
 
 	_, err = tx.Exec(sqlStatement, id)
@@ -270,7 +278,7 @@ func (s *Storage) GetForNotification(date time.Time) ([]storage.Notification, er
 
 	sqlStatement := `SELECT id, title, date_start, user_id
 	FROM calendar.event 
-	WHERE notified = false AND date_start - time_to_notification * interval '1 minute' < $1
+	WHERE notified = 'no' AND date_start - time_to_notification * interval '1 minute' < $1
 	ORDER BY date_start;`
 
 	rows, err := s.db.Query(sqlStatement, date.Format(time.RFC3339))

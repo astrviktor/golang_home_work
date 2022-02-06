@@ -12,7 +12,7 @@ CREATE TABLE calendar.event (
     description text NOT NULL,
     user_id integer,
     time_to_notification integer,
-    notified bool NOT NULL default false
+    notified text NOT NULL default 'no'
 );
 
 COMMENT ON TABLE calendar.event IS 'События календаря';

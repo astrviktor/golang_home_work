@@ -45,6 +45,7 @@ func pbEventToStorageEvent(pbEvent *pb.Event) storage.Event {
 		Description:        pbEvent.Description,
 		UserID:             int(pbEvent.UsedId),
 		TimeToNotification: int(pbEvent.TimeToNotification),
+		Notified:           pbEvent.Notified,
 	}
 
 	return event
@@ -60,6 +61,7 @@ func storageEventToPbEvent(event storage.Event) *pb.Event {
 	pbEvent.Description = event.Description
 	pbEvent.UsedId = uint32(event.UserID)
 	pbEvent.TimeToNotification = uint32(event.TimeToNotification)
+	pbEvent.Notified = event.Notified
 
 	return &pbEvent
 }

@@ -20,7 +20,7 @@ func TestGRPCServer(t *testing.T) {
 	storage := memorystorage.New()
 	calendar := app.New(logg, storage)
 
-	grpcServer := NewServer(logg, calendar, storage, "127.0.0.1", "8888")
+	grpcServer := NewServer(logg, calendar, storage, "127.0.0.1", "7777")
 
 	ctx, cancel := signal.NotifyContext(context.Background(),
 		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
@@ -29,7 +29,7 @@ func TestGRPCServer(t *testing.T) {
 	go grpcServer.Start(ctx)
 	time.Sleep(2 * time.Second)
 
-	client, err := NewClient("127.0.0.1", "8888")
+	client, err := NewClient("127.0.0.1", "7777")
 	require.NoError(t, err)
 
 	date, err := time.Parse("2006-01-02", "2022-01-01")
@@ -86,12 +86,12 @@ func TestGRPCServer(t *testing.T) {
 		require.False(t, ok)
 	})
 
-	t.Run("grpc test create and list", func(t *testing.T) {
-		dateA, err := time.Parse("2006-01-02", "2022-02-07")
+	t.Run("grpc test create and list day, week, month", func(t *testing.T) {
+		dateA, err := time.Parse("2006-01-02", "2022-03-07")
 		require.NoError(t, err)
-		dateB, err := time.Parse("2006-01-02", "2022-02-08")
+		dateB, err := time.Parse("2006-01-02", "2022-03-08")
 		require.NoError(t, err)
-		dateC, err := time.Parse("2006-01-02", "2022-02-14")
+		dateC, err := time.Parse("2006-01-02", "2022-03-14")
 		require.NoError(t, err)
 
 		eventA := generate.GenerateEventDate(dateA, dateA.Add(time.Hour))
@@ -112,15 +112,15 @@ func TestGRPCServer(t *testing.T) {
 		require.Len(t, id, 36)
 		eventC.ID = id
 
-		events, err := client.GetListDay("2022-02-08")
+		events, err := client.GetListDay("2022-03-08")
 		require.NoError(t, err)
 		require.Equal(t, 1, len(events))
 
-		events, err = client.GetListWeek("2022-02-07")
+		events, err = client.GetListWeek("2022-03-07")
 		require.NoError(t, err)
 		require.Equal(t, 2, len(events))
 
-		events, err = client.GetListMonth("2022-02-01")
+		events, err = client.GetListMonth("2022-03-01")
 		require.NoError(t, err)
 		require.Equal(t, 3, len(events))
 	})
