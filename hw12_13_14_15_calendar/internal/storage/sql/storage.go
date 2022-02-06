@@ -69,11 +69,11 @@ func (s *Storage) Create(event storage.Event) (string, error) {
 	}
 
 	sqlStatement := `INSERT INTO calendar.event
-    (id, title, date_start, date_end, description, user_id, time_to_notification)
-	VALUES ($1, $2, $3, $4, $5, $6, $7);`
+    (id, title, date_start, date_end, description, user_id, time_to_notification, notified)
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8);`
 
 	_, err = tx.Exec(sqlStatement, ID, event.Title, event.DateStart, event.DateEnd,
-		event.Description, event.UserID, event.TimeToNotification)
+		event.Description, event.UserID, event.TimeToNotification, event.Notified)
 	if err != nil {
 		return "", err
 	}

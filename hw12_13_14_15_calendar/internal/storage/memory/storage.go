@@ -53,6 +53,7 @@ func (s *Storage) Create(event storage.Event) (string, error) {
 		Description:        event.Description,
 		UserID:             event.UserID,
 		TimeToNotification: event.TimeToNotification,
+		Notified:           event.Notified,
 	}
 
 	s.mutex.Lock()
