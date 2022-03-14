@@ -53,6 +53,7 @@ func (s *Storage) Create(event storage.Event) (string, error) {
 		Description:        event.Description,
 		UserID:             event.UserID,
 		TimeToNotification: event.TimeToNotification,
+		Notified:           event.Notified,
 	}
 
 	s.mutex.Lock()
@@ -62,9 +63,9 @@ func (s *Storage) Create(event storage.Event) (string, error) {
 	return ID, nil
 }
 
-// Update - Обновить (ID события, событие).
-func (s *Storage) Update(id string, event storage.Event) (bool, error) {
-	event.ID = id
+// Update - Обновить (событие).
+func (s *Storage) Update(event storage.Event) (bool, error) {
+	id := event.ID
 
 	s.mutex.Lock()
 	s.events[id] = event
@@ -95,7 +96,7 @@ func (s *Storage) Get(id string) (storage.Event, bool, error) {
 
 // EventListStartEnd - Список событий со старта (дата) по окончание (дата).
 func (s *Storage) EventListStartEnd(start time.Time, end time.Time) ([]storage.Event, error) {
-	var events []storage.Event
+	events := make([]storage.Event, 0)
 
 	s.mutex.Lock()
 	for _, event := range s.events {
@@ -135,4 +136,55 @@ func (s *Storage) EventListMonth(date time.Time) ([]storage.Event, error) {
 	dateEnd := dateStart.AddDate(0, 1, 0)
 
 	return s.EventListStartEnd(dateStart, dateEnd)
+}
+
+func (s *Storage) Notified(id string) error {
+	s.mutex.Lock()
+	event, ok := s.events[id]
+	if ok {
+		event.Notified = "yes"
+		s.events[id] = event
+	}
+	s.mutex.Unlock()
+
+	return nil
+}
+
+func (s *Storage) GetForNotification(date time.Time) ([]storage.Notification, error) {
+	notifications := make([]storage.Notification, 0)
+
+	s.mutex.Lock()
+	for _, event := range s.events {
+		duration := time.Duration(event.TimeToNotification) * time.Minute
+		dateToNotification := event.DateStart.Add(-duration)
+		if event.Notified == "no" && dateToNotification.Before(date) {
+			notification := storage.Notification{
+				ID:        event.ID,
+				Title:     event.Title,
+				DateStart: event.DateStart,
+				UserID:    event.UserID,
+			}
+
+			notifications = append(notifications, notification)
+		}
+	}
+	s.mutex.Unlock()
+
+	sort.SliceStable(notifications, func(i, j int) bool {
+		return notifications[i].DateStart.Before(notifications[j].DateStart)
+	})
+
+	return notifications, nil
+}
+
+func (s *Storage) DeleteOlder(date time.Time) error {
+	s.mutex.Lock()
+	for _, event := range s.events {
+		if date.After(event.DateStart) {
+			delete(s.events, event.ID)
+		}
+	}
+	s.mutex.Unlock()
+
+	return nil
 }

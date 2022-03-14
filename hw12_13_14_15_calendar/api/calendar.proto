@@ -1,0 +1,59 @@
+syntax = "proto3";
+
+package calendar;
+
+option go_package = "./;pb";
+
+import "google/protobuf/timestamp.proto";
+
+service Calendar {
+  rpc CreateEvent (Event) returns (ResponseID) {}
+  rpc GetEvent (ID) returns (ResponseEvent) {}
+  rpc UpdateEvent (Event) returns (ResponseStatus) {}
+  rpc DeleteEvent (ID) returns (ResponseStatus) {}
+  rpc GetList (Date) returns (ResponseEventSlice) {}
+}
+
+message Event {
+  string id = 1;
+  string title = 2;
+  google.protobuf.Timestamp date_start = 3;
+  google.protobuf.Timestamp date_end = 4;
+  string description = 5;
+  uint32 used_id = 6;
+  uint32 time_to_notification = 7;
+  string notified = 8;
+}
+
+enum Period {
+  PERIOD_UNSPECIFIED = 0;
+  PERIOD_DAY = 1;
+  PERIOD_WEEK = 2;
+  PERIOD_MONTH = 3;
+}
+
+message ID {
+  string id = 1;
+}
+
+message Date {
+  string date = 1;
+  Period period = 2;
+}
+
+message ResponseID {
+  string id = 1;
+}
+
+message ResponseEvent {
+  Event event = 1;
+}
+
+message ResponseEventSlice {
+  repeated Event events = 1;
+}
+
+message ResponseStatus {
+  bool status = 1;
+}
+

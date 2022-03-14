@@ -1,45 +1,41 @@
 package storage
 
 import (
+	"context"
 	"errors"
-	"math/rand"
 	"time"
 )
 
 type Event struct {
-	ID                 string    // ID - уникальный идентификатор события (можно воспользоваться UUID)
-	Title              string    // Заголовок - короткий
-	DateStart          time.Time // Дата и время начала события
-	DateEnd            time.Time // Дата и время окончания события
-	Description        string    // Описание события - длинный текст
-	UserID             int       // ID пользователя, владельца события
-	TimeToNotification int       // За сколько минут высылать уведомление
+	ID                 string    `json:"id"`                 // ID - уникальный идентификатор события (UUID)
+	Title              string    `json:"title"`              // Заголовок - короткий
+	DateStart          time.Time `json:"dateStart"`          // Дата и время начала события
+	DateEnd            time.Time `json:"dateEnd"`            // Дата и время окончания события
+	Description        string    `json:"description"`        // Описание события - длинный текст
+	UserID             int       `json:"usedId"`             // ID пользователя, владельца события
+	TimeToNotification int       `json:"timeToNotification"` // За сколько минут высылать уведомление
+	Notified           string    `json:"notified"`           // Было ли отправлено уведомление
 }
 
 var ErrDateTimeBusy = errors.New("это время занято другим событием")
 
-func getRandomString(n int) string {
-	var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789") //nolint:gofumpt
-
-	s := make([]rune, n)
-	for i := range s {
-		s[i] = letters[rand.Intn(len(letters))] //nolint:gosec
-	}
-	return string(s)
+type Storage interface {
+	Connect(ctx context.Context) error
+	Close(ctx context.Context) error
+	Create(event Event) (string, error)
+	Update(event Event) (bool, error)
+	Delete(id string) (bool, error)
+	Get(id string) (Event, bool, error)
+	EventListStartEnd(start time.Time, end time.Time) ([]Event, error)
+	EventListDay(date time.Time) ([]Event, error)
+	EventListWeek(date time.Time) ([]Event, error)
+	EventListMonth(date time.Time) ([]Event, error)
+	Notified(id string) error
+	GetForNotification(date time.Time) ([]Notification, error)
+	DeleteOlder(date time.Time) error
 }
 
-func GenerateEvent() Event {
-	date := time.Now()
-	date = time.Date(date.Year(), date.Month(), date.Day(),
-		date.Hour(), date.Minute(), date.Second(), 0, date.Location())
-
-	return Event{
-		ID:                 "",
-		Title:              getRandomString(rand.Intn(10) + 10), //nolint:gosec
-		DateStart:          date,
-		DateEnd:            date.Add(time.Second),
-		Description:        getRandomString(rand.Intn(100) + 100), //nolint:gosec
-		UserID:             rand.Intn(100),                        //nolint:gosec
-		TimeToNotification: rand.Intn(30) + 30,                    //nolint:gosec
-	}
-}
+const (
+	SQLMode    string = "sql"
+	MemoryMode string = "memory"
+)

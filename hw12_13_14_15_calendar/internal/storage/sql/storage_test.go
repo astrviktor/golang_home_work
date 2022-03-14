@@ -16,7 +16,7 @@ func TestStorage(t *testing.T) {
 	t.Skip() // Remove for SQL tests.
 
 	t.Run("sql storage create and get", func(t *testing.T) {
-		testStorage := New(dsn)
+		testStorage := New(dsn, 5)
 		ctx := context.Background()
 		err := testStorage.Connect(ctx)
 		require.NoError(t, err)
@@ -40,7 +40,7 @@ func TestStorage(t *testing.T) {
 	})
 
 	t.Run("sql storage create and update", func(t *testing.T) {
-		testStorage := New(dsn)
+		testStorage := New(dsn, 5)
 		ctx := context.Background()
 		err := testStorage.Connect(ctx)
 		require.NoError(t, err)
@@ -55,7 +55,7 @@ func TestStorage(t *testing.T) {
 
 		updEvent := storage.GenerateEvent()
 		updEvent.ID = uuid
-		ok, err := testStorage.Update(uuid, updEvent)
+		ok, err := testStorage.Update(updEvent)
 		require.NoError(t, err)
 		require.True(t, ok)
 
@@ -70,7 +70,7 @@ func TestStorage(t *testing.T) {
 	})
 
 	t.Run("sql storage create and delete", func(t *testing.T) {
-		testStorage := New(dsn)
+		testStorage := New(dsn, 5)
 		ctx := context.Background()
 		err := testStorage.Connect(ctx)
 		require.NoError(t, err)
@@ -98,7 +98,7 @@ func TestStorage(t *testing.T) {
 	})
 
 	t.Run("sql storage create and list", func(t *testing.T) {
-		testStorage := New(dsn)
+		testStorage := New(dsn, 5)
 		ctx := context.Background()
 		err := testStorage.Connect(ctx)
 		require.NoError(t, err)
@@ -131,7 +131,7 @@ func TestStorage(t *testing.T) {
 	})
 
 	t.Run("sql storage create and ErrDateTimeBusy error", func(t *testing.T) {
-		testStorage := New(dsn)
+		testStorage := New(dsn, 5)
 		ctx := context.Background()
 		err := testStorage.Connect(ctx)
 		require.NoError(t, err)
@@ -160,7 +160,7 @@ func TestStorage(t *testing.T) {
 func TestStorageMultithreading(t *testing.T) {
 	t.Skip() // Remove for SQL tests.
 
-	testStorage := New(dsn)
+	testStorage := New(dsn, 5)
 	ctx := context.Background()
 	err := testStorage.Connect(ctx)
 	require.NoError(t, err)
@@ -221,14 +221,18 @@ func TestStorageMultithreading(t *testing.T) {
 	go func() {
 		defer wg.Done()
 		for _, uuid := range uuidSet1 {
-			_, _ = testStorage.Update(uuid, storage.GenerateEvent())
+			event := storage.GenerateEvent()
+			event.ID = uuid
+			_, _ = testStorage.Update(event)
 		}
 	}()
 
 	go func() {
 		defer wg.Done()
 		for _, uuid := range uuidSet2 {
-			_, _ = testStorage.Update(uuid, storage.GenerateEvent())
+			event := storage.GenerateEvent()
+			event.ID = uuid
+			_, _ = testStorage.Update(event)
 		}
 	}()
 

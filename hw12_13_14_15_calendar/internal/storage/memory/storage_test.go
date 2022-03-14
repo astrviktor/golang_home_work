@@ -35,7 +35,7 @@ func TestStorage(t *testing.T) {
 
 		updEvent := storage.GenerateEvent()
 		updEvent.ID = uuid
-		ok, err := testStorage.Update(uuid, updEvent)
+		ok, err := testStorage.Update(updEvent)
 		require.NoError(t, err)
 		require.True(t, ok)
 
@@ -159,14 +159,18 @@ func TestStorageMultithreading(t *testing.T) {
 	go func() {
 		defer wg.Done()
 		for _, uuid := range uuidSet1 {
-			_, _ = testStorage.Update(uuid, storage.GenerateEvent())
+			event := storage.GenerateEvent()
+			event.ID = uuid
+			_, _ = testStorage.Update(event)
 		}
 	}()
 
 	go func() {
 		defer wg.Done()
 		for _, uuid := range uuidSet2 {
-			_, _ = testStorage.Update(uuid, storage.GenerateEvent())
+			event := storage.GenerateEvent()
+			event.ID = uuid
+			_, _ = testStorage.Update(event)
 		}
 	}()
 
