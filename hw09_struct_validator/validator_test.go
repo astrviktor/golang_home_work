@@ -2,8 +2,11 @@ package hw09structvalidator
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 type UserRole string
@@ -34,6 +37,11 @@ type (
 		Code int    `validate:"in:200,404,500"`
 		Body string `json:"omitempty"`
 	}
+
+	Slices struct {
+		Int    []int    `validate:"in:1,2,3"`
+		String []string `validate:"in:a,b,c"`
+	}
 )
 
 func TestValidate(t *testing.T) {
@@ -42,10 +50,47 @@ func TestValidate(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			// Place your code here.
+			in:          int64(5),
+			expectedErr: ErrProgramError,
 		},
-		// ...
-		// Place your code here.
+		{
+			in: User{
+				ID:     "12345",
+				Name:   "Nick",
+				Age:    10,
+				Email:  "1@1",
+				Role:   "stuff",
+				Phones: []string{"79000000000", "79000000000"},
+				meta:   []byte{},
+			},
+			expectedErr: ErrValidationError,
+		},
+		{
+			in:          App{Version: "1.2.3"},
+			expectedErr: nil,
+		},
+		{
+			in: Token{
+				Header:    []byte{1},
+				Payload:   []byte{2},
+				Signature: []byte{3},
+			},
+			expectedErr: nil,
+		},
+		{
+			in: Response{
+				Code: 400,
+				Body: "",
+			},
+			expectedErr: ErrValidationError,
+		},
+		{
+			in: Slices{
+				Int:    []int{1, 2, 3},
+				String: []string{"a", "b", "c"},
+			},
+			expectedErr: nil,
+		},
 	}
 
 	for i, tt := range tests {
@@ -53,8 +98,8 @@ func TestValidate(t *testing.T) {
 			tt := tt
 			t.Parallel()
 
-			// Place your code here.
-			_ = tt
+			err := Validate(tt.in)
+			require.True(t, errors.Is(err, tt.expectedErr))
 		})
 	}
 }
