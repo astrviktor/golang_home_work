@@ -64,6 +64,8 @@ func (s *Server) Event(w http.ResponseWriter, r *http.Request) {
 // curl --request GET 'http://127.0.0.1:8888/event?id=d9aed75b-3c9a-423b-8455-7ea824e9766e'
 
 func (s *Server) GetEvent(w http.ResponseWriter, r *http.Request) {
+	r.Header.Add("Cache-Control", "no-cache, private, max-age=0")
+
 	args := r.URL.Query()
 	id := args.Get("id")
 	if len(id) == 0 {

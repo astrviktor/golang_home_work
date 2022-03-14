@@ -24,8 +24,9 @@ type LoggerConf struct {
 }
 
 type StorageConf struct {
-	Mode string `yaml:"mode"`
-	DSN  string `yaml:"dsn"`
+	Mode               string `yaml:"mode"`
+	DSN                string `yaml:"dsn"`
+	MaxConnectAttempts int    `yaml:"maxConnectAttempts"`
 }
 
 type HTTPServerConf struct {
@@ -45,20 +46,20 @@ func NewCalendarConfig(configFile string) CalendarConfig {
 	if err != nil {
 		log.Println(err)
 		log.Println("using default calendar config")
-		return DefaultConfig()
+		return DefaultCalendarConfig()
 	}
 
 	err = yaml.Unmarshal(yamlFile, &config)
 	if err != nil {
 		log.Println(err)
 		log.Println("using default calendar config")
-		return DefaultConfig()
+		return DefaultCalendarConfig()
 	}
 
 	return config
 }
 
-func DefaultConfig() CalendarConfig {
+func DefaultCalendarConfig() CalendarConfig {
 	return CalendarConfig{
 		LoggerConf{Level: 1, TimeFormat: "2006-01-02T15:04:05Z07:00"},
 		StorageConf{Mode: "in-memory", DSN: "postgres://user:password123@localhost:5432/calendar"},

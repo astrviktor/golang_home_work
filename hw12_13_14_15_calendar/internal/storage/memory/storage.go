@@ -53,6 +53,7 @@ func (s *Storage) Create(event storage.Event) (string, error) {
 		Description:        event.Description,
 		UserID:             event.UserID,
 		TimeToNotification: event.TimeToNotification,
+		Notified:           event.Notified,
 	}
 
 	s.mutex.Lock()
@@ -141,7 +142,7 @@ func (s *Storage) Notified(id string) error {
 	s.mutex.Lock()
 	event, ok := s.events[id]
 	if ok {
-		event.Notified = true
+		event.Notified = "yes"
 		s.events[id] = event
 	}
 	s.mutex.Unlock()
@@ -156,7 +157,7 @@ func (s *Storage) GetForNotification(date time.Time) ([]storage.Notification, er
 	for _, event := range s.events {
 		duration := time.Duration(event.TimeToNotification) * time.Minute
 		dateToNotification := event.DateStart.Add(-duration)
-		if !event.Notified && dateToNotification.Before(date) {
+		if event.Notified == "no" && dateToNotification.Before(date) {
 			notification := storage.Notification{
 				ID:        event.ID,
 				Title:     event.Title,

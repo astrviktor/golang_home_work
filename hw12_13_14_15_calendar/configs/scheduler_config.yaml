@@ -1,7 +1,8 @@
-amqp_scheduler:
+amqpScheduler:
   uri: amqp://guest:guest@localhost:5672/
   exchange: "events"
-  repeat: 1m
+  repeatSecond: 60
 storage:
   mode: sql
   dsn: postgres://user:password123@localhost:5432/calendar
+  maxConnectAttempts: 5

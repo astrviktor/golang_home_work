@@ -28,6 +28,7 @@ func GenerateEvent() Event {
 		Description:        getRandomString(rand.Intn(100) + 100), //nolint:gosec
 		UserID:             rand.Intn(100),                        //nolint:gosec
 		TimeToNotification: rand.Intn(30) + 30,                    //nolint:gosec
+		Notified:           "no",
 	}
 }
 

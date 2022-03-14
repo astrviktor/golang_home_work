@@ -8,7 +8,7 @@ import (
 )
 
 type SenderConfig struct {
-	AMQPSender AMQPSenderConf
+	AMQPSender AMQPSenderConf `yaml:"amqpSender"`
 }
 
 type AMQPSenderConf struct {

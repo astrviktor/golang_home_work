@@ -1,0 +1,8 @@
+amqpScheduler:
+  uri: amqp://guest:guest@rabbitmq:5672/
+  exchange: "events"
+  repeatSecond: 20
+storage:
+  mode: sql
+  dsn: postgres://user:password123@postgres:5432/calendar
+  maxConnectAttempts: 5

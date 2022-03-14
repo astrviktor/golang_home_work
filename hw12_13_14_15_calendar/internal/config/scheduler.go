@@ -3,20 +3,19 @@ package config
 import (
 	"log"
 	"os"
-	"time"
 
 	"gopkg.in/yaml.v3"
 )
 
 type SchedulerConfig struct {
-	AMQPScheduler AMQPSchedulerConf
-	Storage       StorageConf
+	AMQPScheduler AMQPSchedulerConf `yaml:"amqpScheduler"`
+	Storage       StorageConf       `yaml:"storage"`
 }
 
 type AMQPSchedulerConf struct {
-	URI      string        `yaml:"uri"`
-	Exchange string        `yaml:"exchange"`
-	Repeat   time.Duration `yaml:"repeat"`
+	URI          string `yaml:"uri"`
+	Exchange     string `yaml:"exchange"`
+	RepeatSecond int    `yaml:"repeatSecond"`
 }
 
 func NewSchedulerConfig(configFile string) SchedulerConfig {
@@ -41,7 +40,7 @@ func NewSchedulerConfig(configFile string) SchedulerConfig {
 
 func DefaultSchedulerConfig() SchedulerConfig {
 	return SchedulerConfig{
-		AMQPSchedulerConf{"amqp://guest:guest@localhost:5672/", "events", 5 * time.Second},
+		AMQPSchedulerConf{"amqp://guest:guest@localhost:5672/", "events", 5},
 		StorageConf{Mode: "sql", DSN: "postgres://user:password123@localhost:5432/calendar"},
 	}
 }

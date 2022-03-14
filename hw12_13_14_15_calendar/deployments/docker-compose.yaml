@@ -12,6 +12,7 @@ services:
       - ../migrations:/docker-entrypoint-initdb.d
     ports:
       - "5432:5432"
+
   rabbitmq:
     image: rabbitmq:3-management-alpine
     container_name: "rabbitmq"
@@ -21,3 +22,15 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"
+
+  calendar:
+    image: calendar:develop
+    ports:
+      - "8888:8888"
+      - "9999:9999"
+
+  calendar_scheduler:
+    image: calendar_scheduler:develop
+
+  calendar_sender:
+    image: calendar_sender:develop

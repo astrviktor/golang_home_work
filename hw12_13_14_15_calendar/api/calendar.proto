@@ -22,6 +22,7 @@ message Event {
   string description = 5;
   uint32 used_id = 6;
   uint32 time_to_notification = 7;
+  string notified = 8;
 }
 
 enum Period {

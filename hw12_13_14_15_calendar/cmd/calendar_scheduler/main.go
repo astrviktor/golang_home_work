@@ -10,6 +10,8 @@ import (
 
 	"github.com/astrviktor/golang_home_work/hw12_13_14_15_calendar/internal/config"
 	"github.com/astrviktor/golang_home_work/hw12_13_14_15_calendar/internal/queue/producer"
+	"github.com/astrviktor/golang_home_work/hw12_13_14_15_calendar/internal/storage"
+	memorystorage "github.com/astrviktor/golang_home_work/hw12_13_14_15_calendar/internal/storage/memory"
 	sqlstorage "github.com/astrviktor/golang_home_work/hw12_13_14_15_calendar/internal/storage/sql"
 	"github.com/astrviktor/golang_home_work/hw12_13_14_15_calendar/internal/version"
 )
@@ -29,16 +31,23 @@ func main() {
 	}
 
 	config := config.NewSchedulerConfig(configFile)
-	storage := sqlstorage.New(config.Storage.DSN)
 
-	if err := storage.Connect(context.Background()); err != nil {
+	var st storage.Storage
+	if config.Storage.Mode == storage.SQLMode {
+		st = sqlstorage.New(config.Storage.DSN, config.Storage.MaxConnectAttempts)
+	} else {
+		st = memorystorage.New()
+	}
+
+	if err := st.Connect(context.Background()); err != nil {
 		log.Fatal("error connecting to storage")
 	}
 
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
 
-	ticker := time.NewTicker(config.AMQPScheduler.Repeat)
+	repeat := time.Duration(config.AMQPScheduler.RepeatSecond) * time.Second
+	ticker := time.NewTicker(repeat)
 
 	go func() {
 		for t := range ticker.C {
@@ -50,7 +59,7 @@ func main() {
 				continue
 			}
 
-			if err = p.Produce(storage); err != nil {
+			if err = p.Produce(st); err != nil {
 				log.Println("error producing:", err.Error())
 			}
 
@@ -61,7 +70,7 @@ func main() {
 	}()
 
 	<-ctx.Done()
-	if err := storage.Close(ctx); err != nil {
+	if err := st.Close(ctx); err != nil {
 		log.Println("error closing storage:", err.Error())
 	}
 	log.Println("scheduler done")

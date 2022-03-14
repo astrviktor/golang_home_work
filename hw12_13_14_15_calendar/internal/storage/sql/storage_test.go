@@ -16,7 +16,7 @@ func TestStorage(t *testing.T) {
 	t.Skip() // Remove for SQL tests.
 
 	t.Run("sql storage create and get", func(t *testing.T) {
-		testStorage := New(dsn)
+		testStorage := New(dsn, 5)
 		ctx := context.Background()
 		err := testStorage.Connect(ctx)
 		require.NoError(t, err)
@@ -40,7 +40,7 @@ func TestStorage(t *testing.T) {
 	})
 
 	t.Run("sql storage create and update", func(t *testing.T) {
-		testStorage := New(dsn)
+		testStorage := New(dsn, 5)
 		ctx := context.Background()
 		err := testStorage.Connect(ctx)
 		require.NoError(t, err)
@@ -70,7 +70,7 @@ func TestStorage(t *testing.T) {
 	})
 
 	t.Run("sql storage create and delete", func(t *testing.T) {
-		testStorage := New(dsn)
+		testStorage := New(dsn, 5)
 		ctx := context.Background()
 		err := testStorage.Connect(ctx)
 		require.NoError(t, err)
@@ -98,7 +98,7 @@ func TestStorage(t *testing.T) {
 	})
 
 	t.Run("sql storage create and list", func(t *testing.T) {
-		testStorage := New(dsn)
+		testStorage := New(dsn, 5)
 		ctx := context.Background()
 		err := testStorage.Connect(ctx)
 		require.NoError(t, err)
@@ -131,7 +131,7 @@ func TestStorage(t *testing.T) {
 	})
 
 	t.Run("sql storage create and ErrDateTimeBusy error", func(t *testing.T) {
-		testStorage := New(dsn)
+		testStorage := New(dsn, 5)
 		ctx := context.Background()
 		err := testStorage.Connect(ctx)
 		require.NoError(t, err)
@@ -160,7 +160,7 @@ func TestStorage(t *testing.T) {
 func TestStorageMultithreading(t *testing.T) {
 	t.Skip() // Remove for SQL tests.
 
-	testStorage := New(dsn)
+	testStorage := New(dsn, 5)
 	ctx := context.Background()
 	err := testStorage.Connect(ctx)
 	require.NoError(t, err)

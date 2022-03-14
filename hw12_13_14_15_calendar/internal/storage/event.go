@@ -14,7 +14,7 @@ type Event struct {
 	Description        string    `json:"description"`        // Описание события - длинный текст
 	UserID             int       `json:"usedId"`             // ID пользователя, владельца события
 	TimeToNotification int       `json:"timeToNotification"` // За сколько минут высылать уведомление
-	Notified           bool      `json:"notified"`           // Было ли отправлено уведомление
+	Notified           string    `json:"notified"`           // Было ли отправлено уведомление
 }
 
 var ErrDateTimeBusy = errors.New("это время занято другим событием")
@@ -34,3 +34,8 @@ type Storage interface {
 	GetForNotification(date time.Time) ([]Notification, error)
 	DeleteOlder(date time.Time) error
 }
+
+const (
+	SQLMode    string = "sql"
+	MemoryMode string = "memory"
+)

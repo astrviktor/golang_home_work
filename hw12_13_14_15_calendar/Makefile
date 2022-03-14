@@ -1,7 +1,9 @@
 BIN_CALENDAR := "./bin/calendar"
 BIN_CALENDAR_SCHEDULER := "./bin/calendar_scheduler"
 BIN_CALENDAR_SENDER := "./bin/calendar_sender"
-DOCKER_IMG="calendar:develop"
+DOCKER_CALENDAR_IMG="calendar:develop"
+DOCKER_CALENDAR_SCHEDULER_IMG="calendar_scheduler:develop"
+DOCKER_CALENDAR_SENDER_IMG="calendar_sender:develop"
 
 GIT_HASH := $(shell git log --format="%h" -n 1)
 LDFLAGS := -X main.release="develop" -X main.buildDate=$(shell date -u +%Y-%m-%dT%H:%M:%S) -X main.gitHash=$(GIT_HASH)
@@ -27,11 +29,16 @@ run: build
 build-img:
 	docker build \
 		--build-arg=LDFLAGS="$(LDFLAGS)" \
-		-t $(DOCKER_IMG) \
-		-f build/Dockerfile .
-
-run-img: build-img
-	docker run -p 8888:8888 $(DOCKER_IMG)
+		-t $(DOCKER_CALENDAR_IMG) \
+		-f build/calendar/Dockerfile .
+	docker build \
+		--build-arg=LDFLAGS="$(LDFLAGS)" \
+		-t $(DOCKER_CALENDAR_SCHEDULER_IMG) \
+		-f build/calendar_scheduler/Dockerfile .
+	docker build \
+		--build-arg=LDFLAGS="$(LDFLAGS)" \
+		-t $(DOCKER_CALENDAR_SENDER_IMG) \
+		-f build/calendar_sender/Dockerfile .
 
 version: build
 	$(BIN_CALENDAR) version
@@ -45,10 +52,15 @@ install-lint-deps:
 lint: install-lint-deps
 	golangci-lint run ./...
 
-compose-up:
+up:
 	docker-compose -f deployments/docker-compose.yaml up --remove-orphans -d
 
-compose-down:
+down:
+	docker-compose -f deployments/docker-compose.yaml down
+
+integration-tests:
+	docker-compose -f deployments/docker-compose.yaml up --remove-orphans -d
+	go test -v -tags=integration -count=1 ./tests/integration/...
 	docker-compose -f deployments/docker-compose.yaml down
 
 .PHONY: build run build-img run-img version test lint
