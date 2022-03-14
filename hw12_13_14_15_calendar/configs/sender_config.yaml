@@ -1,0 +1,4 @@
+amqpSender:
+  uri: amqp://guest:guest@localhost:5672/
+  queue: "events"
+  retry: 5

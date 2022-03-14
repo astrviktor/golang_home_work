@@ -19,7 +19,7 @@ import (
 type Server struct {
 	logger  app.Logger
 	app     Application
-	storage app.Storage
+	storage storage.Storage
 	addr    string
 	pb.UnimplementedCalendarServer
 }
@@ -27,7 +27,7 @@ type Server struct {
 type Application interface { // TODO
 }
 
-func NewServer(logger app.Logger, app Application, storage app.Storage, host string, port string) *Server {
+func NewServer(logger app.Logger, app Application, storage storage.Storage, host string, port string) *Server {
 	return &Server{
 		logger:  logger,
 		app:     app,
@@ -45,6 +45,7 @@ func pbEventToStorageEvent(pbEvent *pb.Event) storage.Event {
 		Description:        pbEvent.Description,
 		UserID:             int(pbEvent.UsedId),
 		TimeToNotification: int(pbEvent.TimeToNotification),
+		Notified:           pbEvent.Notified,
 	}
 
 	return event
@@ -60,6 +61,7 @@ func storageEventToPbEvent(event storage.Event) *pb.Event {
 	pbEvent.Description = event.Description
 	pbEvent.UsedId = uint32(event.UserID)
 	pbEvent.TimeToNotification = uint32(event.TimeToNotification)
+	pbEvent.Notified = event.Notified
 
 	return &pbEvent
 }

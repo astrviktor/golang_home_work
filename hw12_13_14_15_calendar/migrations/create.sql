@@ -1,6 +1,6 @@
-CREATE DATABASE calendar;
-CREATE USER "user" WITH ENCRYPTED PASSWORD 'password123';
-GRANT ALL PRIVILEGES ON DATABASE calendar TO "user";
+--CREATE DATABASE calendar;
+--CREATE USER "user" WITH ENCRYPTED PASSWORD 'password123';
+--GRANT ALL PRIVILEGES ON DATABASE calendar TO "user";
 
 CREATE SCHEMA calendar;
 
@@ -11,7 +11,8 @@ CREATE TABLE calendar.event (
     date_end timestamp with time zone NOT NULL,
     description text NOT NULL,
     user_id integer,
-    time_to_notification integer
+    time_to_notification integer,
+    notified text NOT NULL default 'no'
 );
 
 COMMENT ON TABLE calendar.event IS 'События календаря';
@@ -23,6 +24,7 @@ COMMENT ON COLUMN calendar.event.date_end IS 'Дата и время завер�
 COMMENT ON COLUMN calendar.event.description IS 'Описание события - длинный текст';
 COMMENT ON COLUMN calendar.event.user_id IS 'ID пользователя, владельца события';
 COMMENT ON COLUMN calendar.event.time_to_notification IS 'За сколько минут высылать уведомление';
+COMMENT ON COLUMN calendar.event.notified IS 'Было ли отправлено уведомление';
 
 CREATE INDEX event_id_index ON calendar.event (id);
 CREATE INDEX event_title_index ON calendar.event (title);
@@ -30,3 +32,4 @@ CREATE INDEX event_date_start_index ON calendar.event (date_start);
 CREATE INDEX event_date_end_index ON calendar.event (date_end);
 CREATE INDEX event_description_index ON calendar.event (description);
 CREATE INDEX event_user_id_index ON calendar.event (user_id);
+CREATE INDEX event_notified_index ON calendar.event (notified);

@@ -2,8 +2,9 @@ logger:
   level: 1
   timeformat: 2006-01-02T15:04:05Z07:00
 storage:
-  mode: in-memory
-  dsn: postgres://user:password123@localhost:5432/calendar
+  mode: sql
+  dsn: postgres://user:password123@postgres:5432/calendar
+  maxConnectAttempts: 5
 httpserver:
   host:
   port: 8888

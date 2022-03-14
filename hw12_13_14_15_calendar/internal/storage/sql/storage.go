@@ -12,12 +12,13 @@ import (
 )
 
 type Storage struct {
-	dsn string
-	db  *sql.DB
+	dsn                string
+	db                 *sql.DB
+	maxConnectAttempts int
 }
 
-func New(dsn string) *Storage {
-	return &Storage{dsn, nil}
+func New(dsn string, maxConnectAttempts int) *Storage {
+	return &Storage{dsn, nil, maxConnectAttempts}
 }
 
 func (s *Storage) Connect(ctx context.Context) error {
@@ -26,7 +27,14 @@ func (s *Storage) Connect(ctx context.Context) error {
 		return err
 	}
 
-	err = db.PingContext(ctx)
+	for i := 0; i < s.maxConnectAttempts; i++ {
+		err = db.Ping()
+		if err == nil {
+			break
+		}
+		time.Sleep(5 * time.Second)
+	}
+
 	if err != nil {
 		return err
 	}
@@ -61,11 +69,11 @@ func (s *Storage) Create(event storage.Event) (string, error) {
 	}
 
 	sqlStatement := `INSERT INTO calendar.event
-    (id, title, date_start, date_end, description, user_id, time_to_notification)
-	VALUES ($1, $2, $3, $4, $5, $6, $7);`
+    (id, title, date_start, date_end, description, user_id, time_to_notification, notified)
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8);`
 
 	_, err = tx.Exec(sqlStatement, ID, event.Title, event.DateStart, event.DateEnd,
-		event.Description, event.UserID, event.TimeToNotification)
+		event.Description, event.UserID, event.TimeToNotification, event.Notified)
 	if err != nil {
 		return "", err
 	}
@@ -151,7 +159,7 @@ func (s *Storage) Clear() error {
 func (s *Storage) Get(id string) (storage.Event, bool, error) {
 	var event storage.Event
 
-	sqlStatement := `SELECT id, title, date_start, date_end, description, user_id, time_to_notification
+	sqlStatement := `SELECT id, title, date_start, date_end, description, user_id, time_to_notification, notified
 	FROM calendar.event 
 	WHERE id = $1;`
 
@@ -163,7 +171,7 @@ func (s *Storage) Get(id string) (storage.Event, bool, error) {
 
 	rows.Next()
 	err = rows.Scan(&event.ID, &event.Title, &event.DateStart, &event.DateEnd, &event.Description,
-		&event.UserID, &event.TimeToNotification)
+		&event.UserID, &event.TimeToNotification, &event.Notified)
 	if errors.Is(err, sql.ErrNoRows) {
 		return event, false, nil
 	}
@@ -240,4 +248,85 @@ func (s *Storage) EventListMonth(date time.Time) ([]storage.Event, error) {
 	dateEnd := dateStart.AddDate(0, 1, 0)
 
 	return s.EventListStartEnd(dateStart, dateEnd)
+}
+
+func (s *Storage) Notified(id string) error {
+	tx, err := s.db.Begin()
+	if err != nil {
+		return err
+	}
+
+	sqlStatement := `UPDATE calendar.event 
+	SET notified='yes'
+	WHERE id = $1;`
+
+	_, err = tx.Exec(sqlStatement, id)
+	if err != nil {
+		return err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Storage) GetForNotification(date time.Time) ([]storage.Notification, error) {
+	notifications := make([]storage.Notification, 0)
+
+	sqlStatement := `SELECT id, title, date_start, user_id
+	FROM calendar.event 
+	WHERE notified = 'no' AND date_start - time_to_notification * interval '1 minute' < $1
+	ORDER BY date_start;`
+
+	rows, err := s.db.Query(sqlStatement, date.Format(time.RFC3339))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var notification storage.Notification
+
+		err := rows.Scan(&notification.ID, &notification.Title, &notification.DateStart, &notification.UserID)
+
+		if errors.Is(err, sql.ErrNoRows) {
+			return notifications, nil
+		}
+
+		if err != nil {
+			return notifications, err
+		}
+
+		if rows.Err() != nil {
+			return notifications, err
+		}
+
+		notifications = append(notifications, notification)
+	}
+
+	return notifications, nil
+}
+
+func (s *Storage) DeleteOlder(date time.Time) error {
+	tx, err := s.db.Begin()
+	if err != nil {
+		return err
+	}
+
+	sqlStatement := `DELETE FROM calendar.event WHERE date_start < $1;`
+
+	_, err = tx.Exec(sqlStatement, date)
+	if err != nil {
+		return err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

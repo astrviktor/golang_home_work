@@ -1,4 +1,4 @@
-package main
+package config
 
 // При желании конфигурацию можно вынести в internal/config.
 // Организация конфига в main принуждает нас сужать API компонентов, использовать
@@ -8,10 +8,10 @@ import (
 	"log"
 	"os"
 
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
-type Config struct {
+type CalendarConfig struct {
 	Logger     LoggerConf
 	Storage    StorageConf
 	HTTPServer HTTPServerConf
@@ -24,8 +24,9 @@ type LoggerConf struct {
 }
 
 type StorageConf struct {
-	Mode string `yaml:"mode"`
-	DSN  string `yaml:"dsn"`
+	Mode               string `yaml:"mode"`
+	DSN                string `yaml:"dsn"`
+	MaxConnectAttempts int    `yaml:"maxConnectAttempts"`
 }
 
 type HTTPServerConf struct {
@@ -38,28 +39,28 @@ type GRPCServerConf struct {
 	Port string `yaml:"port"`
 }
 
-func NewConfig(configFile string) Config {
-	var config Config
+func NewCalendarConfig(configFile string) CalendarConfig {
+	var config CalendarConfig
 
 	yamlFile, err := os.ReadFile(configFile)
 	if err != nil {
 		log.Println(err)
-		log.Println("using default config...")
-		return DefaultConfig()
+		log.Println("using default calendar config")
+		return DefaultCalendarConfig()
 	}
 
 	err = yaml.Unmarshal(yamlFile, &config)
 	if err != nil {
 		log.Println(err)
-		log.Println("using default config...")
-		return DefaultConfig()
+		log.Println("using default calendar config")
+		return DefaultCalendarConfig()
 	}
 
 	return config
 }
 
-func DefaultConfig() Config {
-	return Config{
+func DefaultCalendarConfig() CalendarConfig {
+	return CalendarConfig{
 		LoggerConf{Level: 1, TimeFormat: "2006-01-02T15:04:05Z07:00"},
 		StorageConf{Mode: "in-memory", DSN: "postgres://user:password123@localhost:5432/calendar"},
 		HTTPServerConf{Host: "", Port: "8888"},

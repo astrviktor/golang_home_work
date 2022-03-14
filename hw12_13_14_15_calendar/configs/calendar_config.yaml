@@ -1,0 +1,13 @@
+logger:
+  level: 1
+  timeformat: 2006-01-02T15:04:05Z07:00
+storage:
+  mode: sql
+  dsn: postgres://user:password123@localhost:5432/calendar
+  maxConnectAttempts: 5
+httpserver:
+  host:
+  port: 8881
+grpcserver:
+  host:
+  port: 9991

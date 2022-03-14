@@ -20,7 +20,7 @@ func TestHTTPServer(t *testing.T) {
 	storage := memorystorage.New()
 	calendar := app.New(logg, storage)
 
-	httpServer := NewServer(logg, calendar, storage, "127.0.0.1", "7777")
+	httpServer := NewServer(logg, calendar, storage, "127.0.0.1", "6666")
 
 	ctx, cancel := signal.NotifyContext(context.Background(),
 		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
@@ -29,7 +29,7 @@ func TestHTTPServer(t *testing.T) {
 	go httpServer.Start(ctx)
 	time.Sleep(2 * time.Second)
 
-	client := NewClient("127.0.0.1", "7777", time.Second)
+	client := NewClient("127.0.0.1", "6666", time.Second)
 
 	date, err := time.Parse("2006-01-02", "2022-01-01")
 	require.NoError(t, err)
@@ -85,7 +85,7 @@ func TestHTTPServer(t *testing.T) {
 		require.False(t, ok)
 	})
 
-	t.Run("http test create and list", func(t *testing.T) {
+	t.Run("http test create and list day, week, month", func(t *testing.T) {
 		dateA, err := time.Parse("2006-01-02", "2022-02-07")
 		require.NoError(t, err)
 		dateB, err := time.Parse("2006-01-02", "2022-02-08")
